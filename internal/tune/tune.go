@@ -2,10 +2,9 @@ package tune
 
 import (
 	"fmt"
-	"strings"
 
-	"idt/internal/config"
 	"idt/internal/compare"
+	"idt/internal/config"
 	"idt/internal/runner"
 )
 
@@ -19,13 +18,14 @@ const (
 	reset  = "\033[0m"
 )
 
+// Pick is one eligible dialer paired with its answer comparison.
 type Pick struct {
 	Result  runner.Result
 	Verdict compare.Verdict
 }
 
 // Print analyses results and prints a tuning recommendation.
-// Only encrypted dialers are eligible for the primary slot.
+// Only encrypted dialers (DoH/DoT) are eligible for the primary slot.
 func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) {
 	eligible := filterEligible(results, verdicts)
 
@@ -122,6 +122,8 @@ func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts co
 	fmt.Println(bold + cyan + "═══════════════════════════════════════════════════════════════" + reset)
 }
 
+// filterEligible narrows results to encrypted, fully successful,
+// non-hijacked dialers, then sorts by median RTT ascending.
 func filterEligible(results []runner.Result, verdicts map[string]compare.Verdict) []Pick {
 	var out []Pick
 	for _, r := range results {
@@ -153,5 +155,3 @@ func filterEligible(results []runner.Result, verdicts map[string]compare.Verdict
 	}
 	return out
 }
-
-var _ = strings.TrimSpace
