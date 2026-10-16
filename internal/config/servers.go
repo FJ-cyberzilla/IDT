@@ -17,18 +17,18 @@ type Dialer struct {
 
 // Options carries runtime configuration.
 type Options struct {
-	Target     string
-	Dials      int
-	Timeout    time.Duration
-	JitterMin  time.Duration
-	JitterMax  time.Duration
-	MaxDials   int
-	Plan       bool
-	Safety     bool
-	Check      bool
-	Tune       bool
-	Prefer     string
-	Tag        string
+	Target    string
+	Dials     int
+	Timeout   time.Duration
+	JitterMin time.Duration
+	JitterMax time.Duration
+	MaxDials  int
+	Plan      bool
+	Safety    bool
+	Check     bool
+	Tune      bool
+	Prefer    string
+	Tag       string
 }
 
 // SafeTargets is a rotation pool. All neutral. None flaggable.
