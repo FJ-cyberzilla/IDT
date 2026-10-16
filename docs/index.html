@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IDT — Internet Dialer Test · by FJ Cyberzilla</title>
+<meta name="description" content="A signal finder for your internet dialer. Measure which public DNS resolver is fastest and most reliable from your device. By FJ Cyberzilla.">
+<meta name="author" content="FJ Cyberzilla">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-0: #07090d;
+    --bg-1: #0d1117;
+    --bg-2: #161b22;
+    --fg: #e6edf3;
+    --fg-dim: #8b949e;
+    --fg-faint: #484f58;
+    --accent: #58a6ff;
+    --accent-2: #a371f7;
+    --accent-3: #3fb950;
+    --warn: #d29922;
+    --danger: #f85149;
+    --border: #21262d;
+    --border-glow: rgba(88, 166, 255, 0.35);
+    --code-bg: #0a0d12;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 400;
+    background: var(--bg-0);
+    color: var(--fg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ── Advanced animated background ───────────────────────── */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .bg-gradient {
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 10%, rgba(88, 166, 255, 0.15), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 20%, rgba(163, 113, 247, 0.13), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 50% 100%, rgba(63, 185, 80, 0.08), transparent 65%),
+      linear-gradient(180deg, #07090d 0%, #0a0f16 100%);
+    animation: drift 30s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-3%, -2%) scale(1.05); }
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(88, 166, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88, 166, 255, 0.045) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
+  }
+
+  .bg-glow {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    animation: pulse 8s ease-in-out infinite;
+  }
+
+  .bg-glow.a {
+    top: -100px; left: -100px;
+    background: radial-gradient(circle, #58a6ff 0%, transparent 70%);
+    animation-delay: 0s;
+  }
+
+  .bg-glow.b {
+    top: 40%; right: -150px;
+    background: radial-gradient(circle, #a371f7 0%, transparent 70%);
+    animation-delay: 3s;
+  }
+
+  .bg-glow.c {
+    bottom: -150px; left: 30%;
+    background: radial-gradient(circle, #3fb950 0%, transparent 70%);
+    animation-delay: 5s;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(1.08); }
+  }
+
+  /* ── Layout ────────────────────────────────────────────── */
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ────────────────────────────────────────────── */
+  header { margin-bottom: 4rem; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: rgba(88, 166, 255, 0.08);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+
+  .eyebrow .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-3);
+    box-shadow: 0 0 10px var(--accent-3);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #ffffff 0%, #a8c4ff 50%, #a371f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tagline {
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    color: var(--fg-dim);
+    font-weight: 300;
+    max-width: 640px;
+    margin-bottom: 2rem;
+  }
+
+  .tagline strong {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .author-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+    margin-bottom: 2.5rem;
+  }
+
+  .author-line a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(88, 166, 255, 0.4);
+    transition: all 0.2s;
+  }
+
+  .author-line a:hover {
+    color: #79b8ff;
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── CTA buttons ───────────────────────────────────────── */
+  .cta-row {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #58a6ff 0%, #4a90e2 100%);
+    color: #07090d;
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.4), 0 8px 24px -8px rgba(88, 166, 255, 0.5);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.6), 0 12px 32px -8px rgba(88, 166, 255, 0.7);
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--fg);
+    border-color: var(--border);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--fg-faint);
+    transform: translateY(-2px);
+  }
+
+  /* ── Section headers ──────────────────────────────────── */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+  }
+
+  h2 {
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    color: var(--fg);
+  }
+
+  .section-intro {
+    color: var(--fg-dim);
+    max-width: 640px;
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+  }
+
+  section { margin-top: 5rem; }
+
+  /* ── Tiles grid ────────────────────────────────────────── */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .tile {
+    background: linear-gradient(180deg, rgba(22, 27, 34, 0.7) 0%, rgba(13, 17, 23, 0.7) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .tile::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .tile:hover {
+    border-color: rgba(88, 166, 255, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -20px rgba(88, 166, 255, 0.25);
+  }
+
+  .tile:hover::before { opacity: 1; }
+
+  .tile-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    background: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+  }
+
+  .tile-icon.purple { background: rgba(163, 113, 247, 0.1); border-color: rgba(163, 113, 247, 0.25); }
+  .tile-icon.green  { background: rgba(63, 185, 80, 0.1);  border-color: rgba(63, 185, 80, 0.25); }
+  .tile-icon.warn   { background: rgba(210, 153, 34, 0.1); border-color: rgba(210, 153, 34, 0.25); }
+  .tile-icon.danger { background: rgba(248, 81, 73, 0.1);  border-color: rgba(248, 81, 73, 0.25); }
+
+  .tile h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--fg);
+  }
+
+  .tile p {
+    font-size: 0.92rem;
+    color: var(--fg-dim);
+    line-height: 1.6;
+  }
+
+  /* ── Code block ───────────────────────────────────────── */
+  .code-window {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    background: rgba(22, 27, 34, 0.8);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dot-r, .dot-y, .dot-g {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .dot-r { background: #ff5f56; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #27c93f; }
+
+  .code-title {
+    margin-left: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--fg-dim);
+  }
+
+  pre {
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--fg);
+  }
+
+  pre code { font-family: inherit; }
+
+  .c-comment { color: var(--fg-faint); font-style: italic; }
+  .c-cmd     { color: var(--accent); }
+  .c-flag    { color: var(--accent-2); }
+  .c-str     { color: var(--accent-3); }
+  .c-ok      { color: var(--accent-3); }
+  .c-warn    { color: var(--warn); }
+  .c-bad     { color: var(--danger); }
+
+  /* ── Demo table ───────────────────────────────────────── */
+  .demo-table {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  .demo-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .demo-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: rgba(22, 27, 34, 0.9);
+    color: var(--fg-dim);
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(33, 38, 45, 0.5);
+    color: var(--fg);
+  }
+
+  .demo-table tr:last-child td { border-bottom: none; }
+
+  .demo-table tr:hover td { background: rgba(88, 166, 255, 0.04); }
+
+  .proto { color: var(--fg-dim); }
+  .ms-ok { color: var(--accent-3); }
+  .ms-warn { color: var(--warn); }
+  .verdict-ok { color: var(--accent-3); }
+  .verdict-bad { color: var(--danger); }
+
+  /* ── Author card ──────────────────────────────────────── */
+  .author-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.06) 0%, rgba(163, 113, 247, 0.06) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 5rem;
+  }
+
+  .author-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #58a6ff 0%, #a371f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: #07090d;
+    flex-shrink: 0;
+    box-shadow: 0 0 30px rgba(88, 166, 255, 0.4);
+  }
+
+  .author-info h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+  }
+
+  .author-info p {
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+  }
+
+  .author-info a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .author-info a:hover { text-decoration: underline; }
+
+  /* ── Footer ───────────────────────────────────────────── */
+  footer {
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--fg-dim);
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .wrap { padding: 2rem 1rem 4rem; }
+    section { margin-top: 3.5rem; }
+    .author-card { flex-direction: column; text-align: center; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Advanced animated background -->
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-glow a"></div>
+  <div class="bg-glow b"></div>
+  <div class="bg-glow c"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header>
+    <div class="eyebrow">
+      <span class="dot"></span>
+      <span>v0.1 · Go · Termux-ready</span>
+    </div>
+
+    <h1>IDT — Internet Dialer Test</h1>
+
+    <p class="tagline">
+      A <strong>signal finder</strong> for your internet dialer.
+      Measure which public DNS resolver is fastest and most reliable
+      from your device — then point your device at it.
+    </p>
+
+    <p class="author-line">
+      Built by <a href="https://github.com/FJ-cyberzilla">FJ Cyberzilla</a>
+    </p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/FJ-cyberzilla/IDT">
+        ⤓ View on GitHub
+      </a>
+      <a class="btn btn-ghost" href="#usage">
+        Read usage →
+      </a>
+    </div>
+  </header>
+
+  <!-- ── What it does ───────────────────────────────────── -->
+  <section id="what">
+    <div class="section-label">What IDT does</div>
+    <h2>Point. Read. Adjust.</h2>
+    <p class="section-intro">
+      You use IDT the same way you use a satellite signal finder:
+      point at public infrastructure, read the signal, adjust your device.
+      Nothing more, nothing less.
+    </p>
+
+    <div class="tiles">
+
+      <div class="tile">
+        <div class="tile-icon">📡</div>
+        <h3>Measures round-trip time</h3>
+        <p>
+          Dials public DNS resolvers over DoH, DoT, and standard port 53.
+          Records the actual round-trip in milliseconds — no estimates,
+          no fabricated numbers.
+        </p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon purple">🔒</div>
+        <h3>Compares encrypted paths</h3>
+        <p>
+          Queries the same domain through encrypted and unencrypted channels.
+          If the answers disagree, something between you and the resolver
+          is answering on its behalf.
+        </p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon green">📊</div>
+        <h3>Ranks by real performance</h3>
+        <p>
+          Reports median, p90, and jitter per resolver. Sorted fastest-first.
+          Colour-coded so you can read the table in two seconds.
+        </p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon warn">⚙️</div>
+        <h3>Prints the exact setting</h3>
+        <p>
+          For Android Private DNS, IDT gives you the exact hostname to paste.
+          No guessing, no lookup tables, no copy-pasting from forum posts.
+        </p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon purple">🌍</div>
+        <h3>Eight providers, three protocols</h3>
+        <p>
+          Cloudflare, Google, Quad9, OpenDNS, AdGuard, Mullvad, CIRA,
+          ControlD — tested over DoH, DoT, and port 53.
+        </p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon green">🛡️</div>
+        <h3>Gentle on the network</h3>
+        <p>
+          Five dials in check mode. Seventy-two in full mode, spread over
+          40 seconds with jitter. Below the noise floor of any VPN exit.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── What it doesn't do ──────────────────────────────── -->
+  <section id="not">
+    <div class="section-label">What IDT does not do</div>
+    <h2>Signal finder, not a weapon</h2>
+    <p class="section-intro">
+      A signal finder measures the strength of a broadcast. It doesn't
+      intercept, decrypt, or jam anything. IDT is the same category of tool.
+    </p>
+
+    <div class="tiles">
+
+      <div class="tile">
+        <div class="tile-icon danger">✕</div>
+        <h3>No network scanning</h3>
+        <p>IDT sends DNS queries. It does not scan ports, sweep ranges, or probe hosts.</p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon danger">✕</div>
+        <h3>No traffic interception</h3>
+        <p>IDT observes round-trip time. It does not capture, decrypt, or replay anyone's traffic.</p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon danger">✕</div>
+        <h3>No authentication bypass</h3>
+        <p>IDT uses the same public DNS endpoints any device uses. Nothing is bypassed.</p>
+      </div>
+
+      <div class="tile">
+        <div class="tile-icon danger">✕</div>
+        <h3>No private data access</h3>
+        <p>IDT dials <code>example.com</code> by default — an IANA-reserved domain with zero commercial value.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Usage ──────────────────────────────────────────── -->
+  <section id="usage">
+    <div class="section-label">Usage</div>
+    <h2>Install and run</h2>
+    <p class="section-intro">
+      Zero dependencies. Pure Go. Compiles in seconds on Termux, Linux, or macOS.
+    </p>
+
+    <div class="code-window">
+      <div class="code-header">
+        <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+        <span class="code-title">install</span>
+      </div>
+      <pre><code><span class="c-comment"># Clone and build</span>
+<span class="c-cmd">git</span> clone https://github.com/FJ-cyberzilla/IDT.git
+<span class="c-cmd">cd</span> IDT
+<span class="c-cmd">go</span> build -o idt .
+
+<span class="c-comment"># Daily driver — 5 dials, plain-English verdict</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-check</span>
+
+<span class="c-comment"># Full tune-up — benchmark 8 providers × 3 protocols</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span>
+
+<span class="c-comment"># Filter by what you value</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">privacy</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">no-logging</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">blocking</span>
+
+<span class="c-comment"># Plan without sending packets</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-plan</span>
+
+<span class="c-comment"># Compare VPN on vs off</span>
+<span class="c-cmd">./idt</span> <span class="c-flag">-tag</span> <span class="c-str">"no-vpn"</span> <span class="c-flag">-tune</span> &gt; run-no-vpn.txt
+<span class="c-cmd">./idt</span> <span class="c-flag">-tag</span> <span class="c-str">"vpn-on"</span> <span class="c-flag">-tune</span> &gt; run-vpn-on.txt
+<span class="c-cmd">diff</span> run-no-vpn.txt run-vpn-on.txt</code></pre>
+    </div>
+  </section>
+
+  <!-- ── Sample output ──────────────────────────────────── -->
+  <section id="output">
+    <div class="section-label">Sample output</div>
+    <h2>What a run looks like</h2>
+    <p class="section-intro">
+      Colour-coded table, sor
