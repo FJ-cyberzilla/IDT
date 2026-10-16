@@ -1,0 +1,14 @@
+# IDT — Internet Dialer Test
+# https://github.com/<your-user>/idt
+
+User-agent: *
+Allow: /
+
+# Don't index build artifacts or source mirrors
+Disallow: /bin/
+Disallow: /dist/
+Disallow: /*.go$
+Disallow: /internal/
+
+# Sitemap (add if you create one)
+# Sitemap: https://<your-domain>/sitemap.xml
