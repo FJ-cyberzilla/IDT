@@ -20,7 +20,7 @@ func IsAndroidPrivateDNSFailure(err error) bool {
 		return false
 	}
 	errStr := strings.ToLower(err.Error())
-	
+
 	// Common indicators of Android Private DNS rejection / stall when VPN is disconnected:
 	// - Network unreachable (ENETUNREACH)
 	// - Connection refused (ECONNREFUSED)
@@ -35,14 +35,12 @@ func IsAndroidPrivateDNSFailure(err error) bool {
 	return isNetworkBlocked
 }
 
-
-
 type FallbackLookupResult struct {
-	IPs            []net.IP
-	UsedFallback   bool
-	Error          error
-	ErrorDetails   NetworkErrorDetails
-	DiagnosticMsg  string
+	IPs           []net.IP
+	UsedFallback  bool
+	Error         error
+	ErrorDetails  NetworkErrorDetails
+	DiagnosticMsg string
 }
 
 // RobustLookupWithFallback performs a robust DNS lookup for a target hostname.
@@ -105,10 +103,10 @@ func RobustLookupWithFallback(ctx context.Context, host string) FallbackLookupRe
 	}
 
 	return FallbackLookupResult{
-		IPs:          nil,
-		UsedFallback: true,
-		Error:        primaryErr,
-		ErrorDetails: details,
+		IPs:           nil,
+		UsedFallback:  true,
+		Error:         primaryErr,
+		ErrorDetails:  details,
 		DiagnosticMsg: fmt.Sprintf("❌ Resolution failed: %v. %s", primaryErr, details.ActionableHint),
 	}
 }

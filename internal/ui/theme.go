@@ -75,16 +75,16 @@ var (
 				BorderForeground(ColorPrimary)
 
 	// Phase / Dynamic Status Badge Styles
-	PhaseMenuStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffff")).Background(lipgloss.Color("#005f5f")).Padding(0, 1)
-	PhaseInitStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffff00")).Background(lipgloss.Color("#5f5f00")).Padding(0, 1)
+	PhaseMenuStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffff")).Background(lipgloss.Color("#005f5f")).Padding(0, 1)
+	PhaseInitStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffff00")).Background(lipgloss.Color("#5f5f00")).Padding(0, 1)
 	PhaseNetworkStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#af87ff")).Background(lipgloss.Color("#4f0080")).Padding(0, 1)
-	PhaseReadyStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffaf")).Background(lipgloss.Color("#005f3f")).Padding(0, 1)
+	PhaseReadyStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffaf")).Background(lipgloss.Color("#005f3f")).Padding(0, 1)
 	PhaseRunningStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00d7ff")).Background(lipgloss.Color("#005f87")).Padding(0, 1)
 	PhaseResultsStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ff87")).Background(lipgloss.Color("#005f00")).Padding(0, 1)
 	PhaseServersStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87d7ff")).Background(lipgloss.Color("#005faf")).Padding(0, 1)
-	PhaseCheckStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87ffaf")).Background(lipgloss.Color("#00875f")).Padding(0, 1)
-	PhaseTuneStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#875f00")).Padding(0, 1)
-	PhaseErrorStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(ColorError).Padding(0, 1)
+	PhaseCheckStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87ffaf")).Background(lipgloss.Color("#00875f")).Padding(0, 1)
+	PhaseTuneStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#875f00")).Padding(0, 1)
+	PhaseErrorStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(ColorError).Padding(0, 1)
 
 	RedAttentionStyle = lipgloss.NewStyle().
 				Bold(true).

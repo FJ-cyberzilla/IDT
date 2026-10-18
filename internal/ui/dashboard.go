@@ -64,7 +64,7 @@ func InitialModel() Model {
 	opts, dialers, _ := config.Load()
 
 	return Model{
-		state:   stateMenu,
+		state: stateMenu,
 		choices: []string{
 			"🚀 Run Internet Dialer Test (IDT)",
 			"📊 Interactive Dashboard & Telemetry",

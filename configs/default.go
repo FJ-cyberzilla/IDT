@@ -7,17 +7,17 @@ import (
 
 // AppConfig defines the application-wide best performance and reliability settings.
 type AppConfig struct {
-	Version         string        `json:"version"`
-	DefaultTarget   string        `json:"default_target"`
-	FallbackTargets []string      `json:"fallback_targets"`
-	DialsPerEndpoint int          `json:"dials_per_endpoint"`
-	TimeoutMS       int           `json:"timeout_ms"`
-	JitterMinMS     int           `json:"jitter_min_ms"`
-	JitterMaxMS     int           `json:"jitter_max_ms"`
-	MaxConcurrency  int           `json:"max_concurrency"`
-	RetryAttempts   int           `json:"retry_attempts"`
-	PoolMaxIdle     int           `json:"pool_max_idle"`
-	PoolIdleTimeout time.Duration `json:"pool_idle_timeout"`
+	Version          string        `json:"version"`
+	DefaultTarget    string        `json:"default_target"`
+	FallbackTargets  []string      `json:"fallback_targets"`
+	DialsPerEndpoint int           `json:"dials_per_endpoint"`
+	TimeoutMS        int           `json:"timeout_ms"`
+	JitterMinMS      int           `json:"jitter_min_ms"`
+	JitterMaxMS      int           `json:"jitter_max_ms"`
+	MaxConcurrency   int           `json:"max_concurrency"`
+	RetryAttempts    int           `json:"retry_attempts"`
+	PoolMaxIdle      int           `json:"pool_max_idle"`
+	PoolIdleTimeout  time.Duration `json:"pool_idle_timeout"`
 }
 
 // NetworkDialer represents a curated, high-performance public DNS endpoint.

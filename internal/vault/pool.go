@@ -14,17 +14,17 @@ import (
 
 // LivePool manages the dynamic resolver pool, warm-up probing, oracle baselining, and picking.
 type LivePool struct {
-	mu            sync.RWMutex
-	liveDialers   []config.Dialer
-	fallbacks     []config.Dialer
-	logger        Logger
-	datalistDir   string
-	probeTimeout  time.Duration
-	target        string
-	currentIndex  uint64
-	lastRefresh   time.Time
+	mu              sync.RWMutex
+	liveDialers     []config.Dialer
+	fallbacks       []config.Dialer
+	logger          Logger
+	datalistDir     string
+	probeTimeout    time.Duration
+	target          string
+	currentIndex    uint64
+	lastRefresh     time.Time
 	refreshInterval time.Duration
-	stopChan      chan struct{}
+	stopChan        chan struct{}
 }
 
 // NewLivePool creates a new LivePool with hardcoded fallbacks and instrumentation logger.

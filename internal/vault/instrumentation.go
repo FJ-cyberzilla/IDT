@@ -32,17 +32,17 @@ type Event struct {
 	DropReason    string        `json:"drop_reason,omitempty"`
 
 	// Test fields
-	ResolverName  string   `json:"resolver_name,omitempty"`
-	Domain        string   `json:"domain,omitempty"`
-	Field         string   `json:"field,omitempty"`
-	AnswersGiven  []string `json:"answers_given,omitempty"`
+	ResolverName    string   `json:"resolver_name,omitempty"`
+	Domain          string   `json:"domain,omitempty"`
+	Field           string   `json:"field,omitempty"`
+	AnswersGiven    []string `json:"answers_given,omitempty"`
 	AnswersExpected []string `json:"answers_expected,omitempty"`
 
 	// Snapshot fields
-	CandidatesIn        int            `json:"candidates_in,omitempty"`
-	LiveAfterProbe      int            `json:"live_after_probe,omitempty"`
-	LiveAfterBaseline   int            `json:"live_after_baseline,omitempty"`
-	DropCounts          map[string]int `json:"drop_counts,omitempty"`
+	CandidatesIn      int            `json:"candidates_in,omitempty"`
+	LiveAfterProbe    int            `json:"live_after_probe,omitempty"`
+	LiveAfterBaseline int            `json:"live_after_baseline,omitempty"`
+	DropCounts        map[string]int `json:"drop_counts,omitempty"`
 }
 
 // Logger defines the interface for recording instrumentation events.
@@ -55,8 +55,8 @@ type Logger interface {
 
 // JSONLFileLogger writes events as JSONL to a file in the runs directory.
 type JSONLFileLogger struct {
-	mu     sync.Mutex
-	file   *os.File
+	mu      sync.Mutex
+	file    *os.File
 	encoder *json.Encoder
 }
 
@@ -146,6 +146,7 @@ func (l *JSONLFileLogger) Close() error {
 type NoopLogger struct{}
 
 func (NoopLogger) LogWarmup(string, string, string, time.Duration, string, string) {}
-func (NoopLogger) LogTest(string, string, string, string, []string, []string, time.Duration, string) {}
+func (NoopLogger) LogTest(string, string, string, string, []string, []string, time.Duration, string) {
+}
 func (NoopLogger) LogSnapshot(int, int, int, map[string]int) {}
-func (NoopLogger) Close() error { return nil }
+func (NoopLogger) Close() error                              { return nil }

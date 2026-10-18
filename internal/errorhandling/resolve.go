@@ -14,13 +14,13 @@ import (
 type ErrorCategory string
 
 const (
-	CategoryTimeout      ErrorCategory = "TIMEOUT"
-	CategoryDNS          ErrorCategory = "DNS_RESOLUTION_FAILURE"
-	CategoryTLS          ErrorCategory = "TLS_HANDSHAKE_ERROR"
-	CategoryRefused      ErrorCategory = "CONNECTION_REFUSED"
-	CategoryUnreachable  ErrorCategory = "NETWORK_UNREACHABLE"
-	CategoryCanceled     ErrorCategory = "CANCELED"
-	CategoryUnknown      ErrorCategory = "UNKNOWN"
+	CategoryTimeout     ErrorCategory = "TIMEOUT"
+	CategoryDNS         ErrorCategory = "DNS_RESOLUTION_FAILURE"
+	CategoryTLS         ErrorCategory = "TLS_HANDSHAKE_ERROR"
+	CategoryRefused     ErrorCategory = "CONNECTION_REFUSED"
+	CategoryUnreachable ErrorCategory = "NETWORK_UNREACHABLE"
+	CategoryCanceled    ErrorCategory = "CANCELED"
+	CategoryUnknown     ErrorCategory = "UNKNOWN"
 )
 
 // NetworkErrorDetails provides structured analysis and remediation advice for network test failures.

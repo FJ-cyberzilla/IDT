@@ -67,4 +67,3 @@ func BenchmarkRun(b *testing.B) {
 		_ = Run(context.Background(), dialers, opts)
 	}
 }
-
