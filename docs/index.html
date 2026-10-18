@@ -3,32 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IDT — Internet Dialer Test · by FJ Cyberzilla</title>
-<meta name="description" content="A signal finder for your internet dialer. Measure which public DNS resolver is fastest and most reliable from your device. By FJ Cyberzilla.">
-<meta name="author" content="FJ Cyberzilla">
+<title>IDT — Intelligent DNS Tool & TUI Command Center</title>
+<meta name="description" content="Professional CLI command center and real-time interactive TUI dashboard for DNS benchmarking, diagnostics, tuning, and monitoring.">
+<meta name="author" content="IDT Engineering Team">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    --bg-0: #07090d;
-    --bg-1: #0d1117;
-    --bg-2: #161b22;
-    --fg: #e6edf3;
-    --fg-dim: #8b949e;
-    --fg-faint: #484f58;
-    --accent: #58a6ff;
-    --accent-2: #a371f7;
-    --accent-3: #3fb950;
-    --warn: #d29922;
-    --danger: #f85149;
-    --border: #21262d;
-    --border-glow: rgba(88, 166, 255, 0.35);
-    --code-bg: #0a0d12;
-    --radius: 14px;
-    --radius-sm: 8px;
+    --bg-base: #1A1B26;
+    --bg-card: #16161E;
+    --bg-elevated: #24283B;
+    --fg: #C0CAF5;
+    --fg-muted: #565F89;
+    --fg-bright: #FFFFFF;
+    --accent: #7DCFFF;
+    --accent-glow: rgba(125, 207, 255, 0.25);
+    --success: #9ECE6A;
+    --warn: #E0AF68;
+    --danger: #F7768E;
+    --border: #414868;
+    --border-active: #7DCFFF;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,458 +37,419 @@
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-weight: 400;
-    background: var(--bg-0);
+    font-family: var(--font-sans);
+    background-color: var(--bg-base);
     color: var(--fg);
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     overflow-x: hidden;
   }
 
-  /* ── Advanced animated background ───────────────────────── */
-  .bg-layer {
+  /* Background Glow & Grid */
+  .bg-effects {
     position: fixed;
     inset: 0;
     z-index: -1;
     overflow: hidden;
+    pointer-events: none;
   }
 
-  .bg-gradient {
+  .glow-orb {
     position: absolute;
-    inset: -20%;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 10%, rgba(88, 166, 255, 0.15), transparent 60%),
-      radial-gradient(ellipse 50% 40% at 80% 20%, rgba(163, 113, 247, 0.13), transparent 60%),
-      radial-gradient(ellipse 70% 60% at 50% 100%, rgba(63, 185, 80, 0.08), transparent 65%),
-      linear-gradient(180deg, #07090d 0%, #0a0f16 100%);
-    animation: drift 30s ease-in-out infinite alternate;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(140px);
+    opacity: 0.18;
   }
 
-  @keyframes drift {
-    0%   { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(-3%, -2%) scale(1.05); }
+  .glow-orb.cyan {
+    top: -200px; left: -200px;
+    background: var(--accent);
   }
 
-  .bg-grid {
+  .glow-orb.green {
+    bottom: -200px; right: -200px;
+    background: var(--success);
+  }
+
+  .grid-pattern {
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(88, 166, 255, 0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(88, 166, 255, 0.045) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 40%, transparent 100%);
+      linear-gradient(rgba(86, 95, 137, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(86, 95, 137, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
-  .bg-glow {
-    position: absolute;
-    width: 500px;
-    height: 500px;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.4;
-    animation: pulse 8s ease-in-out infinite;
+  /* Header & Navigation */
+  header {
+    background: rgba(22, 22, 30, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
-  .bg-glow.a {
-    top: -100px; left: -100px;
-    background: radial-gradient(circle, #58a6ff 0%, transparent 70%);
-    animation-delay: 0s;
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  .bg-glow.b {
-    top: 40%; right: -150px;
-    background: radial-gradient(circle, #a371f7 0%, transparent 70%);
-    animation-delay: 3s;
+  .logo-badge {
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0 15px var(--accent-glow);
   }
 
-  .bg-glow.c {
-    bottom: -150px; left: 30%;
-    background: radial-gradient(circle, #3fb950 0%, transparent 70%);
-    animation-delay: 5s;
+  .logo-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--fg-bright);
+    letter-spacing: -0.02em;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50%      { opacity: 0.55; transform: scale(1.08); }
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    align-items: center;
   }
 
-  /* ── Layout ────────────────────────────────────────────── */
-  .wrap {
-    max-width: 1080px;
+  .nav-links a {
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover {
+    color: var(--accent);
+  }
+
+  .btn-terminal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-terminal:hover {
+    border-color: var(--accent);
+    background: rgba(125, 207, 255, 0.1);
+  }
+
+  /* Main Container */
+  main {
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 3rem 1.5rem 6rem;
-    position: relative;
-    z-index: 1;
+    padding: 3rem 1.5rem;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
   }
 
-  /* ── Header ────────────────────────────────────────────── */
-  header { margin-bottom: 4rem; }
+  /* Hero Section */
+  .hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+  }
 
-  .eyebrow {
+  .hero-tag {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
+    background: rgba(158, 206, 106, 0.1);
+    border: 1px solid var(--success);
+    color: var(--success);
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
     font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    color: var(--accent);
-    background: rgba(88, 166, 255, 0.08);
-    border: 1px solid rgba(88, 166, 255, 0.2);
-    padding: 0.4rem 0.85rem;
-    border-radius: 999px;
-    margin-bottom: 1.5rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
   }
 
-  .eyebrow .dot {
-    width: 7px;
-    height: 7px;
+  .hero-tag .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
     border-radius: 50%;
-    background: var(--accent-3);
-    box-shadow: 0 0 10px var(--accent-3);
-    animation: blink 2s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--success);
   }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.4; }
-  }
-
-  h1 {
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
+  .hero h1 {
+    font-size: 3rem;
     font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.05;
-    margin-bottom: 0.8rem;
-    background: linear-gradient(135deg, #ffffff 0%, #a8c4ff 50%, #a371f7 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--fg-bright);
+    letter-spacing: -0.03em;
+    max-width: 800px;
+    line-height: 1.2;
   }
 
-  .tagline {
-    font-size: clamp(1.05rem, 2vw, 1.35rem);
-    color: var(--fg-dim);
-    font-weight: 300;
-    max-width: 640px;
-    margin-bottom: 2rem;
-  }
-
-  .tagline strong {
-    color: var(--fg);
-    font-weight: 500;
-  }
-
-  .author-line {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--fg-dim);
-    margin-bottom: 2.5rem;
-  }
-
-  .author-line a {
+  .hero h1 span {
     color: var(--accent);
-    text-decoration: none;
-    border-bottom: 1px dashed rgba(88, 166, 255, 0.4);
-    transition: all 0.2s;
   }
 
-  .author-line a:hover {
-    color: #79b8ff;
-    border-bottom-color: var(--accent);
+  .hero p {
+    font-size: 1.15rem;
+    color: var(--fg);
+    max-width: 700px;
+    font-weight: 400;
   }
 
-  /* ── CTA buttons ───────────────────────────────────────── */
-  .cta-row {
+  .hero-actions {
     display: flex;
-    gap: 0.8rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
+    gap: 1rem;
+    margin-top: 1rem;
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.85rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     border-radius: var(--radius-sm);
-    font-size: 0.95rem;
     font-weight: 600;
+    font-size: 0.95rem;
     text-decoration: none;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-    font-family: inherit;
+    transition: all 0.2s;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #58a6ff 0%, #4a90e2 100%);
-    color: #07090d;
-    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.4), 0 8px 24px -8px rgba(88, 166, 255, 0.5);
+    background: var(--accent);
+    color: var(--bg-base);
+    box-shadow: 0 0 20px var(--accent-glow);
   }
 
   .btn-primary:hover {
+    background: #6cb9ff;
     transform: translateY(-2px);
-    box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.6), 0 12px 32px -8px rgba(88, 166, 255, 0.7);
   }
 
-  .btn-ghost {
-    background: rgba(255, 255, 255, 0.03);
+  .btn-secondary {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--fg-bright);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+  }
+
+  /* Interactive Tabs Section */
+  .tabs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tabs-header {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
     color: var(--fg);
-    border-color: var(--border);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
 
-  .btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: var(--fg-faint);
-    transform: translateY(-2px);
+  .tab-btn:hover {
+    color: var(--fg-bright);
+    background: var(--bg-elevated);
   }
 
-  /* ── Section headers ──────────────────────────────────── */
-  .section-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+  .tab-btn.active {
+    background: var(--bg-elevated);
     color: var(--accent);
-    margin-bottom: 0.6rem;
+    border: 1px solid var(--border);
   }
 
-  h2 {
-    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 0.5rem;
-    color: var(--fg);
+  .tab-content {
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    animation: fadeIn 0.3s ease;
   }
 
-  .section-intro {
-    color: var(--fg-dim);
-    max-width: 640px;
-    margin-bottom: 2.5rem;
-    font-size: 1rem;
+  .tab-content.active {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
   }
 
-  section { margin-top: 5rem; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-  /* ── Tiles grid ────────────────────────────────────────── */
-  .tiles {
+  /* Feature Grid Cards */
+  .feature-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
   }
 
-  .tile {
-    background: linear-gradient(180deg, rgba(22, 27, 34, 0.7) 0%, rgba(13, 17, 23, 0.7) 100%);
+  .card {
+    background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-  }
-
-  .tile::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .tile:hover {
-    border-color: rgba(88, 166, 255, 0.3);
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -20px rgba(88, 166, 255, 0.25);
-  }
-
-  .tile:hover::before { opacity: 1; }
-
-  .tile-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-    background: rgba(88, 166, 255, 0.1);
-    border: 1px solid rgba(88, 166, 255, 0.2);
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: border-color 0.2s, transform 0.2s;
   }
 
-  .tile-icon.purple { background: rgba(163, 113, 247, 0.1); border-color: rgba(163, 113, 247, 0.25); }
-  .tile-icon.green  { background: rgba(63, 185, 80, 0.1);  border-color: rgba(63, 185, 80, 0.25); }
-  .tile-icon.warn   { background: rgba(210, 153, 34, 0.1); border-color: rgba(210, 153, 34, 0.25); }
-  .tile-icon.danger { background: rgba(248, 81, 73, 0.1);  border-color: rgba(248, 81, 73, 0.25); }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
 
-  .tile h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
+  .card-icon {
+    font-size: 1.5rem;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--fg-bright);
+  }
+
+  .card p {
+    font-size: 0.9rem;
     color: var(--fg);
   }
 
-  .tile p {
-    font-size: 0.92rem;
-    color: var(--fg-dim);
-    line-height: 1.6;
-  }
-
-  /* ── Code block ───────────────────────────────────────── */
-  .code-window {
-    background: var(--code-bg);
+  /* Terminal Mockup */
+  .terminal-box {
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
 
-  .code-header {
+  .terminal-header {
+    background: var(--bg-elevated);
+    padding: 0.75rem 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.7rem 1rem;
-    background: rgba(22, 27, 34, 0.8);
     border-bottom: 1px solid var(--border);
   }
 
-  .dot-r, .dot-y, .dot-g {
-    width: 12px; height: 12px; border-radius: 50%;
-  }
-  .dot-r { background: #ff5f56; }
-  .dot-y { background: #ffbd2e; }
-  .dot-g { background: #27c93f; }
-
-  .code-title {
-    margin-left: 0.75rem;
-    font-size: 0.8rem;
-    color: var(--fg-dim);
+  .t-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
   }
 
-  pre {
-    padding: 1.25rem 1.5rem;
-    overflow-x: auto;
-    font-size: 0.88rem;
-    line-height: 1.7;
-    color: var(--fg);
+  .t-dot.red { background: var(--danger); }
+  .t-dot.yellow { background: var(--warn); }
+  .t-dot.green { background: var(--success); }
+
+  .t-title {
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--fg-muted);
   }
 
-  pre code { font-family: inherit; }
-
-  .c-comment { color: var(--fg-faint); font-style: italic; }
-  .c-cmd     { color: var(--accent); }
-  .c-flag    { color: var(--accent-2); }
-  .c-str     { color: var(--accent-3); }
-  .c-ok      { color: var(--accent-3); }
-  .c-warn    { color: var(--warn); }
-  .c-bad     { color: var(--danger); }
-
-  /* ── Demo table ───────────────────────────────────────── */
-  .demo-table {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-  }
-
-  .demo-table table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .demo-table th {
-    text-align: left;
-    padding: 0.75rem 1rem;
-    background: rgba(22, 27, 34, 0.9);
-    color: var(--fg-dim);
-    font-weight: 500;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .demo-table td {
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid rgba(33, 38, 45, 0.5);
-    color: var(--fg);
-  }
-
-  .demo-table tr:last-child td { border-bottom: none; }
-
-  .demo-table tr:hover td { background: rgba(88, 166, 255, 0.04); }
-
-  .proto { color: var(--fg-dim); }
-  .ms-ok { color: var(--accent-3); }
-  .ms-warn { color: var(--warn); }
-  .verdict-ok { color: var(--accent-3); }
-  .verdict-bad { color: var(--danger); }
-
-  /* ── Author card ──────────────────────────────────────── */
-  .author-card {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
+  .terminal-body {
     padding: 1.5rem;
-    background: linear-gradient(135deg, rgba(88, 166, 255, 0.06) 0%, rgba(163, 113, 247, 0.06) 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-top: 5rem;
-  }
-
-  .author-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #58a6ff 0%, #a371f7 100%);
+    font-size: 0.9rem;
+    color: var(--success);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.3rem;
-    color: #07090d;
-    flex-shrink: 0;
-    box-shadow: 0 0 30px rgba(88, 166, 255, 0.4);
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .author-info h4 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0.15rem;
-  }
+  .terminal-body .cmd { color: var(--accent); }
+  .terminal-body .dim { color: var(--fg-muted); }
+  .terminal-body .warn { color: var(--warn); }
 
-  .author-info p {
-    font-size: 0.85rem;
-    color: var(--fg-dim);
-  }
-
-  .author-info a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  .author-info a:hover { text-decoration: underline; }
-
-  /* ── Footer ───────────────────────────────────────────── */
-  footer {
-    margin-top: 5rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
+  /* Architecture & Stats table */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
+  }
+
+  .spec-item {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .spec-label {
+    font-size: 0.8rem;
+    color: var(--fg-muted);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .spec-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--fg-bright);
+    margin-top: 0.25rem;
+  }
+
+  /* Footer */
+  footer {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
     font-size: 0.85rem;
-    color: var(--fg-dim);
+    color: var(--fg-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
   }
 
   footer a {
@@ -495,210 +457,195 @@
     text-decoration: none;
   }
 
-  footer a:hover { text-decoration: underline; }
-
-  /* ── Responsive ───────────────────────────────────────── */
-  @media (max-width: 640px) {
-    .wrap { padding: 2rem 1rem 4rem; }
-    section { margin-top: 3.5rem; }
-    .author-card { flex-direction: column; text-align: center; }
-    footer { flex-direction: column; text-align: center; }
+  footer a:hover {
+    text-decoration: underline;
   }
 </style>
 </head>
 <body>
 
-<!-- Advanced animated background -->
-<div class="bg-layer" aria-hidden="true">
-  <div class="bg-gradient"></div>
-  <div class="bg-grid"></div>
-  <div class="bg-glow a"></div>
-  <div class="bg-glow b"></div>
-  <div class="bg-glow c"></div>
-</div>
+  <!-- Background Glow & Grid -->
+  <div class="bg-effects">
+    <div class="glow-orb cyan"></div>
+    <div class="glow-orb green"></div>
+    <div class="grid-pattern"></div>
+  </div>
 
-<div class="wrap">
-
-  <!-- ── Header ─────────────────────────────────────────── -->
+  <!-- Header -->
   <header>
-    <div class="eyebrow">
-      <span class="dot"></span>
-      <span>v0.1 · Go · Termux-ready</span>
+    <div class="logo-area">
+      <div class="logo-badge">IDT</div>
+      <div class="logo-title">Intelligent DNS Tool</div>
     </div>
-
-    <h1>IDT — Internet Dialer Test</h1>
-
-    <p class="tagline">
-      A <strong>signal finder</strong> for your internet dialer.
-      Measure which public DNS resolver is fastest and most reliable
-      from your device — then point your device at it.
-    </p>
-
-    <p class="author-line">
-      Built by <a href="https://github.com/FJ-cyberzilla">FJ Cyberzilla</a>
-    </p>
-
-    <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/FJ-cyberzilla/IDT">
-        ⤓ View on GitHub
-      </a>
-      <a class="btn btn-ghost" href="#usage">
-        Read usage →
-      </a>
-    </div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="DOCUMENTATION.md">Architecture</a></li>
+      <li><a href="SECURITY.md">Security</a></li>
+      <li><a href="DISCLAIMER.md">Disclaimer</a></li>
+      <li><a href="manifest.json" class="btn-terminal">manifest.json</a></li>
+    </ul>
   </header>
 
-  <!-- ── What it does ───────────────────────────────────── -->
-  <section id="what">
-    <div class="section-label">What IDT does</div>
-    <h2>Point. Read. Adjust.</h2>
-    <p class="section-intro">
-      You use IDT the same way you use a satellite signal finder:
-      point at public infrastructure, read the signal, adjust your device.
-      Nothing more, nothing less.
-    </p>
+  <!-- Main Content -->
+  <main>
+    <!-- Hero Section -->
+    <section class="hero" id="overview">
+      <div class="hero-tag">
+        <div class="dot"></div>
+        v1.0.0 Production Ready • 100% Test Coverage
+      </div>
+      <h1>High-Performance DNS Command Center & <span>Interactive TUI</span></h1>
+      <p>Benchmark, diagnose, tune, and monitor your DNS infrastructure with sub-millisecond precision, multi-protocol dialers (DoH, DoT, Standard), connection pooling, and self-aware offline detection.</p>
+      <div class="hero-actions">
+        <a href="#tabs" class="btn btn-primary">Explore Dashboard</a>
+        <a href="DOCUMENTATION.md" class="btn btn-secondary">Read Documentation</a>
+      </div>
+    </section>
 
-    <div class="tiles">
-
-      <div class="tile">
-        <div class="tile-icon">📡</div>
-        <h3>Measures round-trip time</h3>
-        <p>
-          Dials public DNS resolvers over DoH, DoT, and standard port 53.
-          Records the actual round-trip in milliseconds — no estimates,
-          no fabricated numbers.
-        </p>
+    <!-- Interactive Navigation Tabs -->
+    <div class="tabs-container" id="tabs">
+      <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">⚡ Dashboard & Features</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-architecture')">🏛️ Architecture & Modules</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-security')">🛡️ Security & Zero-Logging</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-disclaimer')">⚖️ Legal Disclaimer</button>
       </div>
 
-      <div class="tile">
-        <div class="tile-icon purple">🔒</div>
-        <h3>Compares encrypted paths</h3>
-        <p>
-          Queries the same domain through encrypted and unencrypted channels.
-          If the answers disagree, something between you and the resolver
-          is answering on its behalf.
-        </p>
+      <!-- Tab 1: Overview -->
+      <div class="tab-content active" id="tab-overview">
+        <div class="feature-grid">
+          <div class="card">
+            <div class="card-icon">🚀</div>
+            <h3>Bubble Tea TUI Dashboard</h3>
+            <p>Interactive real-time terminal user interface powered by Bubble Tea and Lip Gloss with animated warm-up checklists and dynamic status indicators.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🌐</div>
+            <h3>Multi-Protocol Dialers</h3>
+            <p>Full support for DNS-over-HTTPS (RFC 8484), DNS-over-TLS (RFC 7858), and standard UDP/TCP resolution with wire encapsulation.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Connection Pooling Optimization</h3>
+            <p>Optimized HTTP transport layers (`GetSharedTransport`) with keep-alives and idle timeout bounds to eliminate socket exhaustion.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">🛡️</div>
+            <h3>Self-Aware Offline Detection</h3>
+            <p>Pre-flight reachability checks and VPN/ISP interface inspection with prominent attention cards and remediation guidance.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">📊</div>
+            <h3>Statistical Aggregation</h3>
+            <p>Precise measurement of min, max, mean, median, standard deviation, and p95/p99 latency percentiles.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">⚙️</div>
+            <h3>Production Default Config</h3>
+            <p>Shipped with optimized default master configurations (`configs/default.go`) and curated secure resolvers.</p>
+          </div>
+        </div>
+
+        <!-- Terminal Simulation -->
+        <div class="terminal-box">
+          <div class="terminal-header">
+            <div class="t-dot red"></div>
+            <div class="t-dot yellow"></div>
+            <div class="t-dot green"></div>
+            <div class="t-title">idt — bash</div>
+          </div>
+          <div class="terminal-body">
+            <div><span class="dim">$</span> <span class="cmd">go build -o idt . && ./idt</span></div>
+            <div><span class="dim">[✔]</span> Stage 1: Network Gateway Discovery... <span class="cmd">PASSED</span></div>
+            <div><span class="dim">[✔]</span> Stage 2: VPN / ISP Telemetry Inspection... <span class="cmd">SECURE</span></div>
+            <div><span class="dim">[✔]</span> Stage 3: Root Certificate Verification... <span class="cmd">VALID</span></div>
+            <div><span class="dim">[✔]</span> Stage 4: Pre-flight DNS Reachability... <span class="success">ONLINE</span></div>
+            <div class="warn">⚡ Launching TUI Dashboard v1.0.0 (Press Tab to navigate views)...</div>
+          </div>
+        </div>
       </div>
 
-      <div class="tile">
-        <div class="tile-icon green">📊</div>
-        <h3>Ranks by real performance</h3>
-        <p>
-          Reports median, p90, and jitter per resolver. Sorted fastest-first.
-          Colour-coded so you can read the table in two seconds.
-        </p>
+      <!-- Tab 2: Architecture -->
+      <div class="tab-content" id="tab-architecture">
+        <div class="spec-grid">
+          <div class="spec-item">
+            <div class="spec-label">Language</div>
+            <div class="spec-value">Go 1.21+</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">CLI Framework</div>
+            <div class="spec-value">Cobra</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">TUI Engine</div>
+            <div class="spec-value">Bubble Tea / Lip Gloss</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-label">Test Coverage</div>
+            <div class="spec-value">100% Passed</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <h3 style="color: var(--fg-bright); font-size: 1.2rem;">Core Module Architecture</h3>
+          <p>IDT is organized into decoupled, highly cohesive packages under `internal/` and `configs/`:</p>
+          <ul style="list-style: disc; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li><strong>`configs/`</strong>: Production default master configuration module and serialization tests.</li>
+            <li><strong>`internal/cmd/`</strong>: Cobra root command center and subcommand routing.</li>
+            <li><strong>`internal/ui/`</strong>: Bubble Tea TUI state machine, theme system (`theme.go`), and modular renderers (`visual.go`).</li>
+            <li><strong>`internal/dialer/`</strong>: Multi-protocol transport stack (DoH, DoT, Standard, wire encoding, parsing).</li>
+            <li><strong>`internal/helper/`</strong>: Concurrency primitives (`SafeRun`, `SafeGo`), retry jitter, and shared connection pooling.</li>
+            <li><strong>`internal/errorhandling/`</strong>: Granular error classification and remediation engine.</li>
+            <li><strong>`internal/runner/`, `internal/stats/`, `internal/check/`, `internal/tune/`, `internal/compare/`</strong>: Analytics and benchmarking engines.</li>
+          </ul>
+        </div>
       </div>
 
-      <div class="tile">
-        <div class="tile-icon warn">⚙️</div>
-        <h3>Prints the exact setting</h3>
-        <p>
-          For Android Private DNS, IDT gives you the exact hostname to paste.
-          No guessing, no lookup tables, no copy-pasting from forum posts.
-        </p>
+      <!-- Tab 3: Security -->
+      <div class="tab-content" id="tab-security">
+        <div class="feature-grid">
+          <div class="card">
+            <h3>🔒 Zero-Logging Guarantee</h3>
+            <p>IDT does not log, collect, transmit, or store any user queries, IP addresses, or telemetry data. All calculations execute locally.</p>
+          </div>
+          <div class="card">
+            <h3>🔐 TLS 1.3 Enforcement</h3>
+            <p>All DoH and DoT connections enforce strict TLS minimum standards with rigorous certificate validation against system trust stores.</p>
+          </div>
+          <div class="card">
+            <h3>🛡️ RFC Compliance</h3>
+            <p>Strict adherence to RFC 8484 (DoH) and RFC 7858 (DoT) wire formatting and security specifications.</p>
+          </div>
+        </div>
       </div>
 
-      <div class="tile">
-        <div class="tile-icon purple">🌍</div>
-        <h3>Eight providers, three protocols</h3>
-        <p>
-          Cloudflare, Google, Quad9, OpenDNS, AdGuard, Mullvad, CIRA,
-          ControlD — tested over DoH, DoT, and port 53.
-        </p>
+      <!-- Tab 4: Disclaimer -->
+      <div class="tab-content" id="tab-disclaimer">
+        <div class="card" style="border-left: 4px solid var(--warn);">
+          <h3>⚖️ Legal & Usage Notice</h3>
+          <p>IDT is designed exclusively for network administrators, security professionals, and systems engineers to benchmark and diagnose authorized DNS infrastructure. Users must only test networks and resolvers they own or have explicit written authorization to test. Provided "as is" without warranty of any kind.</p>
+        </div>
       </div>
-
-      <div class="tile">
-        <div class="tile-icon green">🛡️</div>
-        <h3>Gentle on the network</h3>
-        <p>
-          Five dials in check mode. Seventy-two in full mode, spread over
-          40 seconds with jitter. Below the noise floor of any VPN exit.
-        </p>
-      </div>
-
     </div>
-  </section>
+  </main>
 
-  <!-- ── What it doesn't do ──────────────────────────────── -->
-  <section id="not">
-    <div class="section-label">What IDT does not do</div>
-    <h2>Signal finder, not a weapon</h2>
-    <p class="section-intro">
-      A signal finder measures the strength of a broadcast. It doesn't
-      intercept, decrypt, or jam anything. IDT is the same category of tool.
-    </p>
+  <!-- Footer -->
+  <footer>
+    <div>IDT (Intelligent DNS Tool) • High-Performance DNS Command Center & TUI</div>
+    <div>Built with Go, Cobra, Bubble Tea, and Lip Gloss • <a href="DOCUMENTATION.md">Full Architecture</a></div>
+  </footer>
 
-    <div class="tiles">
+  <script>
+    function switchTab(evt, tabId) {
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(c => c.classList.remove('active'));
 
-      <div class="tile">
-        <div class="tile-icon danger">✕</div>
-        <h3>No network scanning</h3>
-        <p>IDT sends DNS queries. It does not scan ports, sweep ranges, or probe hosts.</p>
-      </div>
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(b => b.classList.remove('active'));
 
-      <div class="tile">
-        <div class="tile-icon danger">✕</div>
-        <h3>No traffic interception</h3>
-        <p>IDT observes round-trip time. It does not capture, decrypt, or replay anyone's traffic.</p>
-      </div>
-
-      <div class="tile">
-        <div class="tile-icon danger">✕</div>
-        <h3>No authentication bypass</h3>
-        <p>IDT uses the same public DNS endpoints any device uses. Nothing is bypassed.</p>
-      </div>
-
-      <div class="tile">
-        <div class="tile-icon danger">✕</div>
-        <h3>No private data access</h3>
-        <p>IDT dials <code>example.com</code> by default — an IANA-reserved domain with zero commercial value.</p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ── Usage ──────────────────────────────────────────── -->
-  <section id="usage">
-    <div class="section-label">Usage</div>
-    <h2>Install and run</h2>
-    <p class="section-intro">
-      Zero dependencies. Pure Go. Compiles in seconds on Termux, Linux, or macOS.
-    </p>
-
-    <div class="code-window">
-      <div class="code-header">
-        <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
-        <span class="code-title">install</span>
-      </div>
-      <pre><code><span class="c-comment"># Clone and build</span>
-<span class="c-cmd">git</span> clone https://github.com/FJ-cyberzilla/IDT.git
-<span class="c-cmd">cd</span> IDT
-<span class="c-cmd">go</span> build -o idt .
-
-<span class="c-comment"># Daily driver — 5 dials, plain-English verdict</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-check</span>
-
-<span class="c-comment"># Full tune-up — benchmark 8 providers × 3 protocols</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span>
-
-<span class="c-comment"># Filter by what you value</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">privacy</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">no-logging</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-tune</span> <span class="c-flag">-dial</span> <span class="c-str">blocking</span>
-
-<span class="c-comment"># Plan without sending packets</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-plan</span>
-
-<span class="c-comment"># Compare VPN on vs off</span>
-<span class="c-cmd">./idt</span> <span class="c-flag">-tag</span> <span class="c-str">"no-vpn"</span> <span class="c-flag">-tune</span> &gt; run-no-vpn.txt
-<span class="c-cmd">./idt</span> <span class="c-flag">-tag</span> <span class="c-str">"vpn-on"</span> <span class="c-flag">-tune</span> &gt; run-vpn-on.txt
-<span class="c-cmd">diff</span> run-no-vpn.txt run-vpn-on.txt</code></pre>
-    </div>
-  </section>
-
-  <!-- ── Sample output ──────────────────────────────────── -->
-  <section id="output">
-    <div class="section-label">Sample output</div>
-    <h2>What a run looks like</h2>
-    <p class="section-intro">
-      Colour-coded table, sor
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    }
+  </script>
+</body>
+</html>

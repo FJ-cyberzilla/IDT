@@ -1,0 +1,50 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#7DCFFF', 'edgeLabelBackground': '#1A1B26', 'tertiaryColor': '#16161E'}}}%%
+graph TD
+    subgraph User Interface Layer
+        Main["main.go"] --> Cobra["Cobra CLI Command Center\n(internal/cmd/root.go)"]
+        Cobra --> TUI["Bubble Tea TUI Dashboard\n(internal/ui/dashboard.go)"]
+        TUI --> Theme["Lip Gloss Theme System\n(internal/ui/theme.go)"]
+        TUI --> Visual["Modular Visual Renderers\n(internal/ui/visual.go)"]
+    end
+
+    subgraph Configuration & Core Engine
+        Cobra --> ConfigLoader["Config Loader & Policies\n(internal/config/)"]
+        DefaultCfg["Production Default Config\n(configs/default.go)"] --> ConfigLoader
+    end
+
+    subgraph Network & Protocol Layer
+        ConfigLoader --> Dialer["Unified Dialer Abstraction\n(internal/dialer/dialer.go)"]
+        Dialer --> DoH["DNS-over-HTTPS (RFC 8484)\n(internal/dialer/doh.go)"]
+        Dialer --> DoT["DNS-over-TLS (RFC 7858)\n(internal/dialer/dot.go)"]
+        Dialer --> Standard["Standard UDP/TCP Resolver\n(internal/dialer/standard.go)"]
+        DoH --> Wire["Wire Encoder & Parser\n(internal/dialer/wire.go & parse.go)"]
+        DoT --> Wire
+        Standard --> Wire
+    end
+
+    subgraph Vault & Resolver Pool Layer (internal/vault/)
+        VaultPool["Live Pool Manager & Picker\n(internal/vault/pool.go)"] --> VaultCand["Candidate Source Loader\n(internal/vault/candidates.go)"]
+        VaultCand --> CSVFiles["Seed CSVs\n(datalist/*.csv)"]
+        VaultPool --> Inst["JSONL Instrumentation Logger\n(internal/vault/instrumentation.go)"]
+        VaultPool --> Standard
+        VaultPool --> DoH
+    end
+
+    subgraph Analytics & Diagnostics Layer
+        Runner["Concurrent Benchmark Runner\n(internal/runner/)"] --> Dialer
+        Runner --> Stats["Statistical Aggregation\n(internal/stats/)"]
+        Check["Health & Policy Checker\n(internal/check/)"] --> Dialer
+        Tune["Automated Tuner\n(internal/tune/)"] --> Stats
+        Compare["Provider Comparison Engine\n(internal/compare/)"] --> Stats
+    end
+
+    subgraph Resilience & Utility Layer
+        Helper["Advanced Helpers & Connection Pooling\n(internal/helper/advance_helper.go)"] --> Dialer
+        ErrorResolution["Granular Error Classification & Fallback\n(internal/errorhandling/resolve.go & fallback.go)"] --> TUI
+    end
+
+    TUI --> Runner
+    TUI --> Check
+    TUI --> Tune
+    TUI --> Compare
+    TUI --> VaultPool

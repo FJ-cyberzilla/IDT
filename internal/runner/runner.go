@@ -54,11 +54,13 @@ func Run(ctx context.Context, dialers []config.Dialer, opts config.Options) []Re
 	var wg sync.WaitGroup
 
 	for i, d := range dialers {
+		// Acquire semaphore token in the caller before spawning goroutine
+		// to bound live goroutines to maxConcurrent.
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(idx int, dl config.Dialer) {
-			defer wg.Done()
-			sem <- struct{}{}
 			defer func() { <-sem }()
+			defer wg.Done()
 			results[idx] = runOne(ctx, dl, opts)
 		}(i, d)
 	}
@@ -72,6 +74,13 @@ func runOne(ctx context.Context, d config.Dialer, opts config.Options) Result {
 	if dl == nil {
 		return r
 	}
+
+	hint := opts.Dials
+	if hint < 0 {
+		hint = 0
+	}
+	r.Samples = make([]time.Duration, 0, hint)
+	r.IPs = make([][]string, 0, hint)
 
 	for i := 0; i < opts.Dials; i++ {
 		target := opts.Target

@@ -1,0 +1,79 @@
+{
+  "name": "idt",
+  "title": "Intelligent DNS Tool (IDT)",
+  "version": "1.0.0",
+  "description": "Professional CLI command center and real-time interactive TUI dashboard for DNS benchmarking, diagnostics, tuning, and monitoring.",
+  "author": "IDT Maintainers",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/idt.git"
+  },
+  "runtime": {
+    "language": "Go",
+    "min_version": "1.21"
+  },
+  "frameworks": [
+    {
+      "name": "Cobra",
+      "import": "github.com/spf13/cobra",
+      "purpose": "CLI Command Center & Flag Management"
+    },
+    {
+      "name": "Bubble Tea",
+      "import": "github.com/charmbracelet/bubbletea",
+      "purpose": "Interactive Terminal UI State Machine"
+    },
+    {
+      "name": "Lip Gloss",
+      "import": "github.com/charmbracelet/lipgloss",
+      "purpose": "Terminal Styling & Visual Rendering"
+    }
+  ],
+  "components": [
+    {
+      "name": "Core Entry Point",
+      "path": "main.go"
+    },
+    {
+      "name": "Default Configuration",
+      "path": "configs/default.go"
+    },
+    {
+      "name": "Cobra Root Command",
+      "path": "internal/cmd/root.go"
+    },
+    {
+      "name": "TUI Dashboard & Warm-up",
+      "path": "internal/ui/dashboard.go"
+    },
+    {
+      "name": "Visual Renderers",
+      "path": "internal/ui/visual.go"
+    },
+    {
+      "name": "Theme Engine",
+      "path": "internal/ui/theme.go"
+    },
+    {
+      "name": "Multi-Protocol Dialers",
+      "path": "internal/dialer/"
+    },
+    {
+      "name": "Advanced Helpers & Connection Pooling",
+      "path": "internal/helper/advance_helper.go"
+    },
+    {
+      "name": "Error Resolution Engine",
+      "path": "internal/errorhandling/resolve.go"
+    },
+    {
+      "name": "Benchmark Runner",
+      "path": "internal/runner/"
+    },
+    {
+      "name": "Statistical Aggregator",
+      "path": "internal/stats/"
+    }
+  ]
+}
