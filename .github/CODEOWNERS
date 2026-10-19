@@ -1,0 +1,23 @@
+# CODEOWNERS - IDT (Intelligent Diagnostic Toolkit)
+#
+# This file defines individuals or teams responsible for code in the repository.
+# Based on GitHub standards, these owners will be requested for review when pull
+# requests open.
+
+# Global default owners for the entire repository
+* @cyberzilla-systems/maintainers @cyberzilla-systems/core
+
+# Core diagnostic engines and network dialers
+/internal/dialer/    @cyberzilla-systems/networking-lead
+/internal/runner/    @cyberzilla-systems/core
+/internal/vault/     @cyberzilla-systems/security-team
+
+# TUI dashboard and visual styling
+/internal/ui/        @cyberzilla-systems/ui-ux-team
+
+# Enterprise simulation suite
+/internal/enterprise/ @cyberzilla-systems/enterprise-architects
+
+# Documentation and CI/CD pipelines
+/docs/               @cyberzilla-systems/docs-team
+/.github/            @cyberzilla-systems/devops-team
