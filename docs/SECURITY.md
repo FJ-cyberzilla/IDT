@@ -6,6 +6,7 @@ IDT (Intelligent DNS Tool) is designed from the ground up with a strict commitme
 ## 2. Zero-Logging & Telemetry Policy
 - **No Telemetry**: IDT does not collect, log, transmit, or store any user queries, IP addresses, diagnostic metrics, or session data.
 - **Local Execution**: All benchmarking, DNS lookups, and statistical computations execute entirely locally on the operator's machine/device.
+- **Non-Invasive Operation**: IDT never modifies, overrides, or affects Android, Termux, or system-wide DNS or network settings during tests, analysis, or execution.
 - **No External Callbacks**: IDT contains no analytics trackers, crash reporters, or external telemetry hooks.
 
 ## 3. Cryptographic Standards & Transport Security

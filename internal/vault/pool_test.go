@@ -8,6 +8,13 @@ import (
 )
 
 func TestLivePoolWarmupAndPick(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping live resolver test in -short mode")
+	}
+	if os.Getenv("IDT_LIVE") == "" {
+		t.Skip("set IDT_LIVE=1 to run live resolver tests (requires live network access)")
+	}
+
 	tmpDir, err := os.MkdirTemp("", "datalist_*")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)

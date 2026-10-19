@@ -12,6 +12,14 @@ func TestIsAndroidPrivateDNSFailure(t *testing.T) {
 		t.Error("expected false for nil error")
 	}
 
+	if IsAndroidPrivateDNSFailure(net.ErrClosed) { // or generic i/o timeout
+		// test i/o timeout string error
+		// handled below
+	}
+	if IsAndroidPrivateDNSFailure(&net.OpError{Op: "dial", Err: &net.AddrError{Err: "i/o timeout"}}) {
+		t.Error("expected false for pure i/o timeout error")
+	}
+
 	if !IsAndroidPrivateDNSFailure(syscall.ENETUNREACH) {
 		t.Error("expected true for ENETUNREACH")
 	}

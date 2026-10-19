@@ -8,36 +8,36 @@
     "max_dials": 90
   },
   "dialers": [
-    { "name": "Cloudflare", "protocol": "DoH",      "address": "https://cloudflare-dns.com/dns-query" },
-    { "name": "Cloudflare", "protocol": "DoT",      "address": "one.one.one.one:853" },
-    { "name": "Cloudflare", "protocol": "Standard", "address": "1.1.1.1:53" },
+    { "name": "Cloudflare",    "protocol": "DoH",      "address": "https://cloudflare-dns.com/dns-query" },
+    { "name": "Cloudflare",    "protocol": "DoT",      "address": "one.one.one.one:853" },
+    { "name": "Cloudflare",    "protocol": "Standard", "address": "1.1.1.1:53" },
 
-    { "name": "Google",     "protocol": "DoH",      "address": "https://dns.google/dns-query" },
-    { "name": "Google",     "protocol": "DoT",      "address": "dns.google:853" },
-    { "name": "Google",     "protocol": "Standard", "address": "8.8.8.8:53" },
+    { "name": "Google",        "protocol": "DoH",      "address": "https://dns.google/dns-query" },
+    { "name": "Google",        "protocol": "DoT",      "address": "dns.google:853" },
+    { "name": "Google",        "protocol": "Standard", "address": "8.8.8.8:53" },
 
-    { "name": "Quad9",      "protocol": "DoH",      "address": "https://dns.quad9.net/dns-query" },
-    { "name": "Quad9",      "protocol": "DoT",      "address": "dns.quad9.net:853" },
-    { "name": "Quad9",      "protocol": "Standard", "address": "9.9.9.9:53" },
+    { "name": "Quad9",         "protocol": "DoH",      "address": "https://dns.quad9.net/dns-query" },
+    { "name": "Quad9",         "protocol": "DoT",      "address": "dns.quad9.net:853" },
+    { "name": "Quad9",         "protocol": "Standard", "address": "9.9.9.9:53" },
 
-    { "name": "OpenDNS",    "protocol": "DoH",      "address": "https://doh.opendns.com/dns-query" },
-    { "name": "OpenDNS",    "protocol": "DoT",      "address": "dns.opendns.com:853" },
-    { "name": "OpenDNS",    "protocol": "Standard", "address": "208.67.222.222:53" },
+    { "name": "CleanBrowsing", "protocol": "DoH",      "address": "https://doh.cleanbrowsing.org/doh/family-filter/" },
+    { "name": "CleanBrowsing", "protocol": "DoT",      "address": "family-filter-dns.cleanbrowsing.org:853" },
+    { "name": "CleanBrowsing", "protocol": "Standard", "address": "185.228.168.168:53" },
 
-    { "name": "AdGuard",    "protocol": "DoH",      "address": "https://dns.adguard-dns.com/dns-query" },
-    { "name": "AdGuard",    "protocol": "DoT",      "address": "dns.adguard-dns.com:853" },
-    { "name": "AdGuard",    "protocol": "Standard", "address": "94.140.14.14:53" },
+    { "name": "AliDNS",        "protocol": "DoH",      "address": "https://dns.alidns.com/dns-query" },
+    { "name": "AliDNS",        "protocol": "DoT",      "address": "dns.alidns.com:853" },
+    { "name": "AliDNS",        "protocol": "Standard", "address": "223.5.5.5:53" },
 
-    { "name": "Mullvad",    "protocol": "DoH",      "address": "https://dns.mullvad.net/dns-query" },
-    { "name": "Mullvad",    "protocol": "DoT",      "address": "dns.mullvad.net:853" },
-    { "name": "Mullvad",    "protocol": "Standard", "address": "194.242.2.2:53" },
+    { "name": "DNSSB",         "protocol": "DoH",      "address": "https://doh.dns.sb/dns-query" },
+    { "name": "DNSSB",         "protocol": "DoT",      "address": "dot.sb:853" },
+    { "name": "DNSSB",         "protocol": "Standard", "address": "185.222.222.222:53" },
 
-    { "name": "CIRA",       "protocol": "DoH",      "address": "https://protected.canadianshield.cira.ca/dns-query" },
-    { "name": "CIRA",       "protocol": "DoT",      "address": "protected.canadianshield.cira.ca:853" },
-    { "name": "CIRA",       "protocol": "Standard", "address": "149.112.121.10:53" },
+    { "name": "NextDNS",       "protocol": "DoH",      "address": "https://dns.nextdns.io" },
+    { "name": "NextDNS",       "protocol": "DoT",      "address": "dns.nextdns.io:853" },
+    { "name": "NextDNS",       "protocol": "Standard", "address": "45.90.28.0:53" },
 
-    { "name": "ControlD",   "protocol": "DoH",      "address": "https://freedns.controld.com/p0" },
-    { "name": "ControlD",   "protocol": "DoT",      "address": "p0.freedns.controld.com:853" },
-    { "name": "ControlD",   "protocol": "Standard", "address": "76.76.2.0:53" }
+    { "name": "Surfshark",     "protocol": "DoH",      "address": "https://dns.surfsharkdns.com/dns-query" },
+    { "name": "Surfshark",     "protocol": "DoT",      "address": "dns.surfsharkdns.com:853" },
+    { "name": "Surfshark",     "protocol": "Standard", "address": "194.169.169.169:53" }
   ]
 }

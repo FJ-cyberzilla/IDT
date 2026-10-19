@@ -21,15 +21,19 @@ func IsAndroidPrivateDNSFailure(err error) bool {
 	}
 	errStr := strings.ToLower(err.Error())
 
+	// Pure I/O timeout without network unreachability or lookup rejection is general offline/timeout, not Private DNS failure.
+	if strings.Contains(errStr, "i/o timeout") && !strings.Contains(errStr, "dial tcp: lookup") {
+		return false
+	}
+
 	// Common indicators of Android Private DNS rejection / stall when VPN is disconnected:
 	// - Network unreachable (ENETUNREACH)
 	// - Connection refused (ECONNREFUSED)
-	// - I/O timeout or dial lookup rejection
+	// - Dial lookup failure
 	isNetworkBlocked := errors.Is(err, syscall.ENETUNREACH) ||
 		errors.Is(err, syscall.ECONNREFUSED) ||
 		strings.Contains(errStr, "network is unreachable") ||
 		strings.Contains(errStr, "connection refused") ||
-		strings.Contains(errStr, "i/o timeout") ||
 		strings.Contains(errStr, "dial tcp: lookup")
 
 	return isNetworkBlocked

@@ -3,8 +3,12 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"idt/internal/compare"
 	"idt/internal/config"
+	"idt/internal/runner"
+	"idt/internal/tune"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -130,5 +134,80 @@ func RenderTuneView(opts config.Options) string {
 	sb.WriteString(fmt.Sprintf(" • Target Verification Domain: %s\n\n", opts.Target))
 	sb.WriteString("Recommendation: Enable DoH/DoT encapsulation for optimal privacy and bypass of local network injection.\n")
 	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu"))
+	return sb.String()
+}
+
+// RenderCheckResultsView renders live connectivity check results with color spectrum and comprehensive details.
+func RenderCheckResultsView(results []runner.Result) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 🔍 REAL-WORLD CONNECTIVITY & HEALTH CHECK ") + "\n\n")
+	sb.WriteString(Cyan(fmt.Sprintf("Health check — example.com — 5 dials — sequential (Color Spectrum: %s | %s | %s)\n\n",
+		Green("Optimal"), Yellow("Warning"), Red("Unreachable"))))
+
+	var (
+		dohOK, dotOK, anySuccess bool
+		stdLocal                 bool
+	)
+
+	for _, r := range results {
+		status := Red("❌ no answer")
+		if r.Summary.Count > 0 {
+			anySuccess = true
+			lat := r.Summary.Median
+			status = FormatLatency(lat.Milliseconds())
+
+			switch r.Dialer.Protocol {
+			case config.ProtoDoH:
+				dohOK = true
+			case config.ProtoDoT:
+				dotOK = true
+			case config.ProtoStandard:
+				if lat < 3*time.Millisecond {
+					stdLocal = true
+				}
+			}
+		} else {
+			status = Red("❌ unreachable / filtered")
+		}
+
+		// Comprehensive detail: which is what and where
+		protocolTag := Cyan("[" + r.Dialer.Protocol + "]")
+		sb.WriteString(fmt.Sprintf("  %-12s %-10s %-45s  %s\n",
+			Bold(r.Dialer.Name), protocolTag, Dim(r.Dialer.Address), status))
+	}
+
+	sb.WriteString("\n" + Bold("SETTINGS & NETWORK RESOLUTION ANALYSIS:") + "\n")
+	switch {
+	case !anySuccess:
+		sb.WriteString("  " + Red("❌ No dialer reachable. Name resolution is broken.") + "\n")
+		sb.WriteString("     Guidance: Check airplane mode, Wi-Fi/cellular data, or VPN state.\n")
+	case !dohOK:
+		sb.WriteString("  " + Red("❌ Encrypted DoH dialers are unreachable.") + "\n")
+		sb.WriteString("     Guidance: Firewall blocking port 443 or captive portal active.\n")
+	case !dotOK:
+		sb.WriteString("  " + Yellow("⚠ Settings Mismatch / Network Restriction: DoH works, but DoT (port 853) is blocked.") + "\n")
+		sb.WriteString("     Resolution: Android Private DNS (hostname mode) will NOT resolve here.\n")
+		sb.WriteString("     Fix: Switch network or use DoH-based upstreams in your app settings.\n")
+	default:
+		sb.WriteString("  " + Green("✅ All encrypted protocols (DoH + DoT) are fully reachable and optimal.") + "\n")
+		sb.WriteString("     Resolution: Your current settings (Private DNS / Termux upstreams) are fully supported.\n")
+	}
+
+	if stdLocal {
+		sb.WriteString("  " + Yellow("⚠ Local Interception Notice: Standard port 53 is answering locally (VPN/ISP intercept).") + "\n")
+		sb.WriteString("     Resolution: Upstream DNS settings differ from local ISP defaults; encryption bypasses this.\n")
+	}
+
+	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu • [q] Quit"))
+	return sb.String()
+}
+
+// RenderTuneResultsView renders live tuning analysis results.
+func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 📈 RTT DISTRIBUTION & TUNING ANALYSIS ") + "\n\n")
+	rec := tune.GetRecommendationString(sorted, verdicts, opts)
+	sb.WriteString(rec)
+	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu • [q] Quit"))
 	return sb.String()
 }

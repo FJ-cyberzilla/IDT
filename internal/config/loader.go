@@ -21,7 +21,7 @@ type fileFormat struct {
 
 func Load() (Options, []Dialer, error) {
 	opts := DefaultOptions()
-	dialers := DefaultDialers()
+	dialers := NormalizeDialers(DefaultDialers())
 
 	var (
 		configPath = flag.String("config", "servers.json", "path to dialer JSON")
@@ -59,7 +59,7 @@ func Load() (Options, []Dialer, error) {
 				opts.MaxDials = f.Options.MaxDials
 			}
 			if len(f.Dialers) > 0 {
-				dialers = f.Dialers
+				dialers = NormalizeDialers(f.Dialers)
 			}
 		}
 	}

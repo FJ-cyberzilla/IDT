@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	ProtoStandard = "Standard"
@@ -13,6 +16,25 @@ type Dialer struct {
 	Name     string `json:"name"`
 	Protocol string `json:"protocol"`
 	Address  string `json:"address"`
+}
+
+// NormalizeDialer ensures dialer address has the correct default port if missing.
+func NormalizeDialer(d Dialer) Dialer {
+	if d.Protocol == ProtoStandard && d.Address != "" && !strings.Contains(d.Address, ":") {
+		d.Address = d.Address + ":53"
+	} else if d.Protocol == ProtoDoT && d.Address != "" && !strings.Contains(d.Address, ":") {
+		d.Address = d.Address + ":853"
+	}
+	return d
+}
+
+// NormalizeDialers normalizes a slice of dialers.
+func NormalizeDialers(dialers []Dialer) []Dialer {
+	out := make([]Dialer, len(dialers))
+	for i, d := range dialers {
+		out[i] = NormalizeDialer(d)
+	}
+	return out
 }
 
 // Options carries runtime configuration.

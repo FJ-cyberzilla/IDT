@@ -2,6 +2,7 @@ package tune
 
 import (
 	"fmt"
+	"strings"
 
 	"idt/internal/compare"
 	"idt/internal/config"
@@ -24,55 +25,48 @@ type Pick struct {
 	Verdict compare.Verdict
 }
 
-// Print analyses results and prints a tuning recommendation.
-// Only encrypted dialers (DoH/DoT) are eligible for the primary slot.
-func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) {
+// GetRecommendationString generates the tuning recommendation text.
+func GetRecommendationString(results []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) string {
 	eligible := filterEligible(results, verdicts)
+	var sb strings.Builder
 
-	fmt.Println()
-	fmt.Println(bold + cyan + "═══════════════════════════════════════════════════════════════" + reset)
-	fmt.Printf("%s%s TUNING RECOMMENDATION for this device / current network%s\n",
-		bold, cyan, reset)
-	fmt.Println(bold + cyan + "═══════════════════════════════════════════════════════════════" + reset)
+	sb.WriteString("═══════════════════════════════════════════════════════════════\n")
+	sb.WriteString(" TUNING RECOMMENDATION for this device / current network\n")
+	sb.WriteString("═══════════════════════════════════════════════════════════════\n")
 
 	if len(eligible) == 0 {
-		fmt.Println(red + "  No eligible encrypted dialer found." + reset)
-		fmt.Println("  All DoH/DoT endpoints failed or answered locally.")
-		fmt.Println("  Check your network — this is unusual even on locked-down Wi-Fi.")
-		return
+		sb.WriteString("  No eligible encrypted dialer found.\n")
+		sb.WriteString("  All DoH/DoT endpoints failed or answered locally.\n")
+		sb.WriteString("  Check your network — this is unusual even on locked-down Wi-Fi.\n")
+		return sb.String()
 	}
 
 	primary := eligible[0]
-
-	fmt.Printf("\n %sPrimary dialer:%s   %s%s%s (%s)\n",
-		bold, reset, green, primary.Result.Dialer.Name, reset, primary.Result.Dialer.Protocol)
-	fmt.Printf("                   Median %s%dms%s · %d/%d dials OK · clean answers\n",
-		green, primary.Result.Summary.Median.Milliseconds(), reset,
-		primary.Result.Summary.Count, primary.Result.Total)
-	fmt.Printf("                   Endpoint: %s\n", primary.Result.Dialer.Address)
+	sb.WriteString(fmt.Sprintf("\n Primary dialer:   %s (%s)\n", primary.Result.Dialer.Name, primary.Result.Dialer.Protocol))
+	sb.WriteString(fmt.Sprintf("                   Median %dms · %d/%d dials OK · clean answers\n",
+		primary.Result.Summary.Median.Milliseconds(),
+		primary.Result.Summary.Count, primary.Result.Total))
+	sb.WriteString(fmt.Sprintf("                   Endpoint: %s\n", primary.Result.Dialer.Address))
 
 	if pol, ok := config.Policies[primary.Result.Dialer.Name]; ok {
-		fmt.Printf("                   %s%s%s\n", dim, pol.Notes, reset)
+		sb.WriteString(fmt.Sprintf("                   %s\n", pol.Notes))
 		if pol.AndroidDoT != "" {
-			fmt.Printf("                   Android Private DNS: %s%s%s\n",
-				bold, pol.AndroidDoT, reset)
+			sb.WriteString(fmt.Sprintf("                   Android Private DNS: %s\n", pol.AndroidDoT))
 		}
 	}
 
 	if len(eligible) > 1 {
 		fallback := eligible[1]
-		fmt.Printf("\n %sFallback dialer:%s  %s (%s)\n",
-			bold, reset, fallback.Result.Dialer.Name, fallback.Result.Dialer.Protocol)
-		fmt.Printf("                   Median %dms · %d/%d dials OK\n",
+		sb.WriteString(fmt.Sprintf("\n Fallback dialer:  %s (%s)\n", fallback.Result.Dialer.Name, fallback.Result.Dialer.Protocol))
+		sb.WriteString(fmt.Sprintf("                   Median %dms · %d/%d dials OK\n",
 			fallback.Result.Summary.Median.Milliseconds(),
-			fallback.Result.Summary.Count, fallback.Result.Total)
+			fallback.Result.Summary.Count, fallback.Result.Total))
 		if pol, ok := config.Policies[fallback.Result.Dialer.Name]; ok && pol.AndroidDoT != "" {
-			fmt.Printf("                   Android Private DNS: %s\n", pol.AndroidDoT)
+			sb.WriteString(fmt.Sprintf("                   Android Private DNS: %s\n", pol.AndroidDoT))
 		}
 	}
 
-	fmt.Printf("\n %sNetwork notes:%s\n", bold, reset)
-
+	sb.WriteString("\n Network notes & Settings warnings:\n")
 	dotOK := false
 	for _, r := range results {
 		if r.Dialer.Protocol == config.ProtoDoT && r.Summary.Count > 0 {
@@ -81,10 +75,10 @@ func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts co
 		}
 	}
 	if dotOK {
-		fmt.Println("  • DoT works → Android Private DNS is safe to enable.")
+		sb.WriteString("  • DoT works → Android Private DNS is safe and optimal to enable.\n")
 	} else {
-		fmt.Println("  • DoT blocked → Android Private DNS will NOT work here.")
-		fmt.Println("    Use DoH via a browser or DNS app instead.")
+		sb.WriteString("  ⚠ WARNING (Settings/Network Mismatch): DoT port 853 is blocked or restricted.\n")
+		sb.WriteString("    Android Private DNS will NOT work here. Use DoH via a browser/app instead.\n")
 	}
 
 	stdLocal := false
@@ -98,28 +92,36 @@ func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts co
 		}
 	}
 	if stdLocal {
-		fmt.Println("  • Port 53 answers locally (VPN/ISP).")
-		fmt.Println("    Standard dialers are not reaching their named targets.")
+		sb.WriteString("  ⚠ WARNING (Local Interception): Standard port 53 is answering locally (VPN/ISP).\n")
+		sb.WriteString("    Standard dialer responses differ from expected upstream target.\n")
 	}
 
-	fmt.Printf("\n %sAvoid on this network:%s\n", bold, reset)
+	sb.WriteString("\n Avoid on this network:\n")
 	bad := 0
 	for _, r := range results {
 		key := r.Dialer.Name + "|" + r.Dialer.Protocol
 		v := verdicts[key]
 		if r.Summary.Count == 0 {
-			fmt.Printf("  • %s (%s) — unreachable\n", r.Dialer.Name, r.Dialer.Protocol)
+			sb.WriteString(fmt.Sprintf("  • %s (%s) — unreachable\n", r.Dialer.Name, r.Dialer.Protocol))
 			bad++
 		} else if v.Label() == "mismatch" {
-			fmt.Printf("  • %s (%s) — answering locally\n", r.Dialer.Name, r.Dialer.Protocol)
+			sb.WriteString(fmt.Sprintf("  • %s (%s) — answering locally\n", r.Dialer.Name, r.Dialer.Protocol))
 			bad++
 		}
 	}
 	if bad == 0 {
-		fmt.Println("  (none)")
+		sb.WriteString("  (none)\n")
 	}
 
-	fmt.Println(bold + cyan + "═══════════════════════════════════════════════════════════════" + reset)
+	sb.WriteString("═══════════════════════════════════════════════════════════════\n")
+	return sb.String()
+}
+
+// Print analyses results and prints a tuning recommendation.
+// Only encrypted dialers (DoH/DoT) are eligible for the primary slot.
+func Print(results []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) {
+	fmt.Println()
+	fmt.Println(bold + cyan + GetRecommendationString(results, verdicts, opts) + reset)
 }
 
 // filterEligible narrows results to encrypted, fully successful,

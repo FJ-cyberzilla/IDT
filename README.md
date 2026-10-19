@@ -31,7 +31,7 @@ In modern network engineering, choosing the optimal DNS resolver directly impact
 - **🛡️ Self-Aware Offline & Private DNS Detection**: Pre-flight reachability checks, Android Private DNS stall detection (`fallback.go`), and network interface inspection with prominent attention cards and remediation guidance.
 - **📊 Statistical Aggregation**: High-precision measurement of minimum, maximum, arithmetic mean, median, standard deviation, and p95/p99 latency percentiles.
 - **⚙️ Production Default Configuration**: Ships with optimized default master configurations (`configs/default.go`) and curated secure resolvers (Cloudflare, Google, Quad9).
-- **🔒 Zero-Logging Guarantee**: 100% local execution with zero telemetry collection, zero external callbacks, and strict TLS 1.3 certificate validation.
+- **🔒 Zero-Logging & Non-Invasive Execution**: 100% local execution with zero telemetry collection, zero external callbacks, strict TLS 1.3 certificate validation, and guaranteed non-invasive operation (IDT never modifies, overrides, or affects Android, Termux, or system-wide DNS/network settings during tests, analysis, or execution).
 
 ---
 

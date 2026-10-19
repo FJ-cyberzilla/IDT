@@ -4,7 +4,7 @@
 
 **IDT (Intelligent DNS Tool)** is a professional, high-performance, enterprise-grade DNS benchmarking, diagnostics, tuning, and monitoring suite written in Go. It combines a robust headless CLI engine powered by **Cobra** with an interactive real-time terminal user interface (TUI) powered by **Bubble Tea** and **Lip Gloss**. 
 
-IDT is engineered for low-latency network telemetry, strict privacy compliance, multi-protocol DNS resolution (DoH, DoT, Standard UDP/TCP), connection pooling optimization, pre-flight offline detection, advanced error resolution, and secure dynamic resolver pooling via the Vault instrumentation pipeline.
+IDT is engineered for low-latency network telemetry, strict privacy compliance, multi-protocol DNS resolution (DoH, DoT, Standard UDP/TCP), connection pooling optimization, pre-flight offline detection, advanced error resolution, and secure dynamic resolver pooling via the Vault instrumentation pipeline. IDT operates entirely locally and non-invasively; it never modifies, overrides, or affects Android, Termux, or system-wide DNS or network settings during tests, analysis, or execution.
 
 ---
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"idt/internal/check"
 	"idt/internal/compare"
 	"idt/internal/config"
 	"idt/internal/errorhandling"
@@ -24,8 +25,10 @@ const (
 	stateWarmup
 	stateRunning
 	stateResults
-	stateCheck
-	stateTune
+	stateCheckRunning
+	stateCheckResults
+	stateTuneRunning
+	stateTuneResults
 	stateServers
 	stateOfflineError
 )
@@ -54,6 +57,9 @@ type Model struct {
 	err           error
 	opts          config.Options
 	dialers       []config.Dialer
+	checkResults  []runner.Result
+	sortedResults []runner.Result
+	verdicts      map[string]compare.Verdict
 }
 
 func InitialModel() Model {
@@ -86,6 +92,15 @@ func (m Model) Init() tea.Cmd {
 }
 
 type testCompleteMsg struct {
+	sorted   []runner.Result
+	verdicts map[string]compare.Verdict
+}
+
+type checkCompleteMsg struct {
+	results []runner.Result
+}
+
+type tuneCompleteMsg struct {
 	sorted   []runner.Result
 	verdicts map[string]compare.Verdict
 }
@@ -148,15 +163,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = stateServers
 					return m, nil
 				case 3: // Check
-					m.state = stateCheck
-					return m, nil
+					m.state = stateCheckRunning
+					m.loadingText = "Running real-world connectivity diagnostics..."
+					return m, tea.Batch(m.spinner.Tick, runCheckCmd())
 				case 4: // Tune
-					m.state = stateTune
-					return m, nil
+					m.state = stateTuneRunning
+					m.loadingText = "Running RTT distribution & tuning analysis..."
+					return m, tea.Batch(m.spinner.Tick, runTuneCmd(m.opts, m.dialers))
 				case 5: // Exit
 					return m, tea.Quit
 				}
-			} else if m.state == stateResults || m.state == stateCheck || m.state == stateTune || m.state == stateServers || m.state == stateOfflineError {
+			} else if m.state == stateResults || m.state == stateCheckResults || m.state == stateTuneResults || m.state == stateServers || m.state == stateOfflineError {
 				m.state = stateMenu
 				return m, nil
 			}
@@ -166,6 +183,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+
+	case checkCompleteMsg:
+		m.state = stateCheckResults
+		m.checkResults = msg.results
+		return m, nil
+
+	case tuneCompleteMsg:
+		m.state = stateTuneResults
+		m.sortedResults = msg.sorted
+		m.verdicts = msg.verdicts
+		return m, nil
 
 	case warmupProgressMsg:
 		m.warmupStep = msg.nextStep
@@ -223,6 +251,10 @@ func checkPreflightConnectivity() (bool, string) {
 	if err != nil {
 		conn2, err2 := net.DialTimeout("tcp", "8.8.8.8:53", 1500*time.Millisecond)
 		if err2 != nil {
+			errStr := strings.ToLower(err.Error() + " " + err2.Error())
+			if strings.Contains(errStr, "i/o timeout") || strings.Contains(errStr, "timeout") {
+				return false, fmt.Sprintf("No internet connection or network stalled / offline (Primary: %v, Fallback: %v)", err, err2)
+			}
 			if errorhandling.IsAndroidPrivateDNSFailure(err) || errorhandling.IsAndroidPrivateDNSFailure(err2) {
 				return false, "Android Private DNS active but VPN disconnected (Network unreachable / Private DNS rejection). Disable Private DNS in settings or connect VPN."
 			}
@@ -245,6 +277,46 @@ func detectConnectionType() string {
 		}
 	}
 	return "Normal ISP Connection"
+}
+
+func runCheckCmd() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		checkOpts := config.Options{
+			Target:    "example.com",
+			Dials:     1,
+			Timeout:   3 * time.Second,
+			JitterMin: 200 * time.Millisecond,
+			JitterMax: 500 * time.Millisecond,
+			MaxDials:  10,
+		}
+		results := runner.Run(ctx, check.Dialers, checkOpts)
+		time.Sleep(300 * time.Millisecond)
+		return checkCompleteMsg{results: results}
+	}
+}
+
+func runTuneCmd(opts config.Options, dialers []config.Dialer) tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		results := runner.Run(ctx, dialers, opts)
+		sorted := runner.SortByMedian(results)
+
+		truthAnswer, _ := runner.Dial(ctx,
+			config.Dialer{Name: "truth", Protocol: config.ProtoDoH,
+				Address: "https://cloudflare-dns.com/dns-query"},
+			opts.Target, opts.Timeout)
+
+		truthIPs := truthAnswer.IPs
+		verdicts := map[string]compare.Verdict{}
+		for _, r := range results {
+			observed := mostCommonIPs(r.IPs)
+			verdicts[r.Dialer.Name+"|"+r.Dialer.Protocol] = compare.Compare(observed, truthIPs)
+		}
+
+		time.Sleep(300 * time.Millisecond)
+		return tuneCompleteMsg{sorted: sorted, verdicts: verdicts}
+	}
 }
 
 func runTestCmd(opts config.Options, dialers []config.Dialer) tea.Cmd {
@@ -333,13 +405,23 @@ func (m Model) View() string {
 		}
 		sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu"))
 
-	case stateCheck:
+	case stateCheckRunning:
 		sb.WriteString(RenderPhaseBadge("CHECK", "CHECK") + "\n\n")
-		sb.WriteString(RenderCheckView(m.opts, m.dialers))
+		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(HelpStyle.Render("Running real-world connectivity diagnostics..."))
 
-	case stateTune:
+	case stateCheckResults:
+		sb.WriteString(RenderPhaseBadge("CHECK", "CHECK") + "\n\n")
+		sb.WriteString(RenderCheckResultsView(m.checkResults))
+
+	case stateTuneRunning:
 		sb.WriteString(RenderPhaseBadge("TUNE", "TUNE") + "\n\n")
-		sb.WriteString(RenderTuneView(m.opts))
+		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(HelpStyle.Render("Running RTT distribution & tuning analysis..."))
+
+	case stateTuneResults:
+		sb.WriteString(RenderPhaseBadge("TUNE", "TUNE") + "\n\n")
+		sb.WriteString(RenderTuneResultsView(m.sortedResults, m.verdicts, m.opts))
 
 	case stateOfflineError:
 		sb.WriteString(RenderPhaseBadge("ERROR", "ERROR") + "\n\n")

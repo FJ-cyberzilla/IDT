@@ -149,3 +149,23 @@ func TestFilterByPreference(t *testing.T) {
 		}
 	})
 }
+
+func TestNormalizeDialer(t *testing.T) {
+	d1 := Dialer{Name: "TestStandard", Protocol: ProtoStandard, Address: "1.2.3.4"}
+	nd1 := NormalizeDialer(d1)
+	if nd1.Address != "1.2.3.4:53" {
+		t.Errorf("expected 1.2.3.4:53, got %s", nd1.Address)
+	}
+
+	d2 := Dialer{Name: "TestDoT", Protocol: ProtoDoT, Address: "dns.example.com"}
+	nd2 := NormalizeDialer(d2)
+	if nd2.Address != "dns.example.com:853" {
+		t.Errorf("expected dns.example.com:853, got %s", nd2.Address)
+	}
+
+	d3 := Dialer{Name: "TestDoH", Protocol: ProtoDoH, Address: "https://example.com/dns-query"}
+	nd3 := NormalizeDialer(d3)
+	if nd3.Address != "https://example.com/dns-query" {
+		t.Errorf("expected https://example.com/dns-query, got %s", nd3.Address)
+	}
+}
