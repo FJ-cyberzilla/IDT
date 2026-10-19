@@ -56,3 +56,12 @@ func FormatLatency(ms int64) string {
 	}
 	return Yellow(fmt.Sprintf("⚠ slow (%d ms)", ms))
 }
+
+// PrintExitBranding prints the required "FJ™ Cybertronic Systems" branding in vintage orange color at exit of app.
+func PrintExitBranding() {
+	// Vintage orange TrueColor: #ff8700 (RGB 255, 135, 0)
+	fmt.Printf("\n\033[38;2;255;135;0m====================================================\033[0m\n")
+	fmt.Printf("\033[38;2;255;135;0m  FJ™ Cybertronic Systems\033[0m\n")
+	fmt.Printf("\033[38;2;255;135;0m====================================================\033[0m\n\n")
+}
+

@@ -32,6 +32,7 @@ IDT adheres strictly to standard Go project layout conventions (`cmd/`, `interna
 │   ├── runner/                  # Concurrent benchmark execution engine
 │   ├── stats/                   # Statistical aggregation (percentiles, mean, stddev)
 │   ├── tune/                    # Automated performance tuning & recommendation engine
+│   ├── enterprise/              # Advanced enterprise simulation: office matrix, multi-protocol testing, & traffic replay
 │   ├── ui/                      # Bubble Tea TUI state machine, Lip Gloss theme, & visual renderers
 │   └── vault/                   # Vault package: candidate source loading, warm-up probing, oracle baselining, live pool, & JSONL instrumentation
 └── docs/
@@ -179,11 +180,29 @@ The **Vault** subsystem manages candidate resolver seeds, warm-up probing, basel
 - **Warm-Up Stage**: Probes candidates strictly pinned over plain UDP port 53.
 - **Baseline Oracle**: Compares results against an encrypted public oracle (Cloudflare DoH) to filter out intercepting or dead resolvers.
 - **Fallback Chain**: Maintains hardcoded production fallbacks outside the CSV seed list.
-- **Picker & Background Refresh**: Offers round-robin / weighted selection and 15-minute background timer refreshing with pool size alerts (< 3).
+- Picker & Background Refresh: Offers round-robin / weighted selection and 15-minute background timer refreshing with pool size alerts (< 3).
 
 ---
 
-## 10. Testing & Quality Assurance
+## 10. Advanced Enterprise & Protocol Simulation Suite (`internal/enterprise/`)
+
+IDT features a dedicated enterprise simulation engine designed by **FJ™ Cybertronic Systems** to validate application performance and stability across distributed environments before rollout:
+
+### 10.1 Remote Office & Data Center Performance Matrix (`matrix.go`)
+- Concurrently simulates latency, jitter, packet loss, and throughput between distributed remote offices and data centers (New York, San Francisco, London, Frankfurt, Tokyo, Sydney).
+- Computes SLA status (`OPTIMAL`, `WARNING`, `VIOLATED`) based on thresholds and packet drop metrics.
+
+### 10.2 Multi-Protocol Dynamic Testing (`protocols.go`)
+- Probes a variety of protocols (**HTTP/REST API**, **VoIP / SIP-RTP**, **SaaS / M365 / Salesforce**, **Custom App TCP/UDP**) across dynamic network conditions (Normal/Optimal, High Congestion, Extreme Jitter, Packet Loss/Drop).
+- Calculates protocol health scores (0-100) and structured diagnostics.
+
+### 10.3 Live Traffic Capture & Lab Replay Simulator (`replay.go`)
+- Captures production traffic transactions and replays them in a controlled lab setting with speed multipliers (1.0x to 10.0x), jitter injection, and packet drop simulation.
+- Automatically flags anomalies and high-latency spikes to ensure safe deployment rollouts.
+
+---
+
+## 11. Testing & Quality Assurance
 
 IDT maintains **100% unit test coverage** across all internal and top-level packages:
 - `configs/default_test.go`
@@ -211,19 +230,19 @@ go test -v ./...
 
 ---
 
-## 11. Compilation & Usage
+## 12. Compilation & Usage
 
-### 11.1 Build Executable
+### 12.1 Build Executable
 ```bash
 go build -o idt .
 ```
 
-### 11.2 Run Interactive Dashboard
+### 12.2 Run Interactive Dashboard
 ```bash
 ./idt
 ```
 
-### 11.3 Run Headless Benchmark
+### 12.3 Run Headless Benchmark
 ```bash
 ./idt --concurrency 20 --timeout 3s
 ```

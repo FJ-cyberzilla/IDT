@@ -10,6 +10,7 @@ import (
 	"idt/internal/check"
 	"idt/internal/compare"
 	"idt/internal/config"
+	"idt/internal/enterprise"
 	"idt/internal/errorhandling"
 	"idt/internal/runner"
 
@@ -30,6 +31,14 @@ const (
 	stateTuneRunning
 	stateTuneResults
 	stateServers
+	stateEnterpriseMenu
+	stateMatrixRunning
+	stateMatrixResults
+	stateProtocolRunning
+	stateProtocolResults
+	stateReplayRunning
+	stateReplayResults
+	stateAbout
 	stateOfflineError
 )
 
@@ -44,22 +53,29 @@ const (
 )
 
 type Model struct {
-	state         state
-	choices       []string
-	cursor        int
-	spinner       spinner.Model
-	outputLines   []string
-	loadingText   string
-	offlineReason string
-	warmupStep    warmupStep
-	connType      string
-	preflightMsg  string
-	err           error
-	opts          config.Options
-	dialers       []config.Dialer
-	checkResults  []runner.Result
-	sortedResults []runner.Result
-	verdicts      map[string]compare.Verdict
+	state           state
+	choices         []string
+	enterpriseChoices []string
+	cursor          int
+	enterpriseCursor int
+	spinner         spinner.Model
+	outputLines     []string
+	loadingText     string
+	offlineReason   string
+	warmupStep      warmupStep
+	connType        string
+	preflightMsg    string
+	err             error
+	opts            config.Options
+	dialers         []config.Dialer
+	checkResults    []runner.Result
+	sortedResults   []runner.Result
+	verdicts        map[string]compare.Verdict
+	matrixResults   []enterprise.MatrixResult
+	protocolResults []enterprise.ProtocolTestResult
+	replayResult    enterprise.ReplayResult
+	width           int
+	height          int
 }
 
 func InitialModel() Model {
@@ -77,7 +93,15 @@ func InitialModel() Model {
 			"⚙ View Config & Active Servers",
 			"🔍 Run Connectivity Check",
 			"📈 Run Tuning Analysis",
+			"🏢 Advanced Enterprise & Protocol Simulation",
+			"ℹ️ About Us & App Capabilities",
 			"❌ Exit Command Center",
+		},
+		enterpriseChoices: []string{
+			"🌐 Remote Office & Data Center Performance Matrix",
+			"📡 Multi-Protocol Testing (HTTP, VoIP, SaaS, Custom Apps)",
+			"📼 Live Traffic Capture & Lab Replay Simulator",
+			"⬅️ Return to Main Command Center",
 		},
 		cursor:     0,
 		spinner:    s,
@@ -116,9 +140,37 @@ type warmupProgressMsg struct {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
+		key := msg.String()
+		// Requirement: ESC to cancel operation at any time user wanted
+		if key == "esc" {
+			if m.state == stateMenu {
+				return m, tea.Quit
+			}
+			m.state = stateMenu
+			return m, nil
+		}
+
+		// Requirement: be sure using ctrl z, or c dont crash the app
+		if key == "ctrl+c" {
+			if m.state == stateMenu || m.state == stateOfflineError {
+				return m, tea.Quit
+			}
+			m.state = stateMenu
+			return m, nil
+		}
+
+		if key == "ctrl+z" {
+			return m, nil
+		}
+
+		switch key {
+		case "q":
 			if m.state == stateMenu || m.state == stateOfflineError {
 				return m, tea.Quit
 			}
@@ -130,12 +182,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor > 0 {
 					m.cursor--
 				}
+			} else if m.state == stateEnterpriseMenu {
+				if m.enterpriseCursor > 0 {
+					m.enterpriseCursor--
+				}
 			}
 
 		case "down", "j":
 			if m.state == stateMenu {
 				if m.cursor < len(m.choices)-1 {
 					m.cursor++
+				}
+			} else if m.state == stateEnterpriseMenu {
+				if m.enterpriseCursor < len(m.enterpriseChoices)-1 {
+					m.enterpriseCursor++
 				}
 			}
 
@@ -170,10 +230,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = stateTuneRunning
 					m.loadingText = "Running RTT distribution & tuning analysis..."
 					return m, tea.Batch(m.spinner.Tick, runTuneCmd(m.opts, m.dialers))
-				case 5: // Exit
+				case 5: // Enterprise Menu
+					m.state = stateEnterpriseMenu
+					m.enterpriseCursor = 0
+					return m, nil
+				case 6: // About Us
+					m.state = stateAbout
+					return m, nil
+				case 7: // Exit
 					return m, tea.Quit
 				}
-			} else if m.state == stateResults || m.state == stateCheckResults || m.state == stateTuneResults || m.state == stateServers || m.state == stateOfflineError {
+			} else if m.state == stateEnterpriseMenu {
+				switch m.enterpriseCursor {
+				case 0: // Matrix
+					m.state = stateMatrixRunning
+					m.loadingText = "Simulating Remote Office & Data Center Performance Matrix..."
+					return m, tea.Batch(m.spinner.Tick, runMatrixCmd())
+				case 1: // Protocols
+					m.state = stateProtocolRunning
+					m.loadingText = "Running Multi-Protocol Synthetic Probes under Dynamic Conditions..."
+					return m, tea.Batch(m.spinner.Tick, runProtocolCmd())
+				case 2: // Replay
+					m.state = stateReplayRunning
+					m.loadingText = "Capturing and Replaying Live Production Traffic in Lab Setting..."
+					return m, tea.Batch(m.spinner.Tick, runReplayCmd())
+				case 3: // Back to Menu
+					m.state = stateMenu
+					return m, nil
+				}
+			} else if m.state == stateMatrixResults || m.state == stateProtocolResults || m.state == stateReplayResults {
+				m.state = stateEnterpriseMenu
+				return m, nil
+			} else if m.state == stateResults || m.state == stateCheckResults || m.state == stateTuneResults || m.state == stateServers || m.state == stateAbout || m.state == stateOfflineError {
 				m.state = stateMenu
 				return m, nil
 			}
@@ -193,6 +281,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = stateTuneResults
 		m.sortedResults = msg.sorted
 		m.verdicts = msg.verdicts
+		return m, nil
+
+	case matrixCompleteMsg:
+		m.state = stateMatrixResults
+		m.matrixResults = msg.results
+		return m, nil
+
+	case protocolCompleteMsg:
+		m.state = stateProtocolResults
+		m.protocolResults = msg.results
+		return m, nil
+
+	case replayCompleteMsg:
+		m.state = stateReplayResults
+		m.replayResult = msg.result
 		return m, nil
 
 	case warmupProgressMsg:
@@ -277,6 +380,51 @@ func detectConnectionType() string {
 		}
 	}
 	return "Normal ISP Connection"
+}
+
+func runMatrixCmd() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		results := enterprise.RunPerformanceMatrix(ctx, nil, 5)
+		time.Sleep(300 * time.Millisecond)
+		return matrixCompleteMsg{results: results}
+	}
+}
+
+func runProtocolCmd() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		results := enterprise.RunProtocolTests(ctx, nil)
+		time.Sleep(300 * time.Millisecond)
+		return protocolCompleteMsg{results: results}
+	}
+}
+
+func runReplayCmd() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		cfg := enterprise.ReplayConfig{
+			SpeedMultiplier: 1.5,
+			InjectJitter:    true,
+			SimulateDrop:    true,
+			BatchSize:       5,
+		}
+		result := enterprise.RunTrafficReplay(ctx, nil, cfg)
+		time.Sleep(300 * time.Millisecond)
+		return replayCompleteMsg{result: result}
+	}
+}
+
+type matrixCompleteMsg struct {
+	results []enterprise.MatrixResult
+}
+
+type protocolCompleteMsg struct {
+	results []enterprise.ProtocolTestResult
+}
+
+type replayCompleteMsg struct {
+	result enterprise.ReplayResult
 }
 
 func runCheckCmd() tea.Cmd {
@@ -371,6 +519,27 @@ func mostCommonIPs(samples [][]string) []net.IP {
 func (m Model) View() string {
 	var sb strings.Builder
 
+	width := m.width
+	if width <= 0 {
+		width = 80
+	}
+
+	boxWidth := width - 4
+	if boxWidth < 30 {
+		boxWidth = width - 2
+	}
+	if boxWidth < 20 {
+		boxWidth = 40
+	}
+
+	isMobileLike := width > 0 && width < 60
+	currentBoxStyle := BoxStyle.Width(boxWidth)
+	if isMobileLike {
+		currentBoxStyle = currentBoxStyle.Padding(0, 1).Margin(0, 0)
+	} else {
+		currentBoxStyle = currentBoxStyle.Padding(1, 2).Margin(1, 1)
+	}
+
 	// Header banner
 	header := HeaderStyle.Render("🌐 IDT — INTERNET DIALER TEST COMMAND CENTER")
 	sb.WriteString(header + "\n\n")
@@ -378,16 +547,16 @@ func (m Model) View() string {
 	switch m.state {
 	case stateMenu:
 		sb.WriteString(RenderPhaseBadge("MENU", "MENU") + "\n\n")
-		sb.WriteString(RenderMenuChoices(m.choices, m.cursor))
+		sb.WriteString(RenderMenuChoices(m.choices, m.cursor, width))
 
 	case stateWarmup:
 		sb.WriteString(RenderPhaseBadge("WARMUP", "WARMUP") + "\n\n")
-		sb.WriteString(RenderWarmupProgress(m.warmupStep, m.spinner.View(), m.connType))
+		sb.WriteString(RenderWarmupProgress(m.warmupStep, m.spinner.View(), m.connType, width))
 
 	case stateRunning:
 		sb.WriteString(RenderPhaseBadge("RUNNING", "RUNNING") + "\n\n")
 		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
-		sb.WriteString(HelpStyle.Render("Integrated Dashboard • Real-time Benchmark Execution..."))
+		sb.WriteString(HelpStyle.Render("Integrated Dashboard • [ESC] Cancel • [q] Quit"))
 
 	case stateResults:
 		sb.WriteString(RenderPhaseBadge("RESULTS", "RESULTS") + "\n\n")
@@ -395,38 +564,67 @@ func (m Model) View() string {
 		sb.WriteString("Execution completed successfully. Live verdicts computed against ground truth.\n\n")
 		sb.WriteString(fmt.Sprintf("Configured Dialers: %d\n", len(m.dialers)))
 		sb.WriteString(fmt.Sprintf("Target Domain: %s\n\n", m.opts.Target))
-		sb.WriteString(HelpStyle.Render("[Enter] Return to Menu • [q] Quit"))
+		sb.WriteString(HelpStyle.Render("[Enter/ESC] Return to Menu • [q] Quit"))
 
 	case stateServers:
 		sb.WriteString(RenderPhaseBadge("SERVERS", "SERVERS") + "\n\n")
 		sb.WriteString(TitleStyle.Render(" ⚙ CONFIGURED SERVERS & PROTOCOLS ") + "\n\n")
 		for _, d := range m.dialers {
-			sb.WriteString(fmt.Sprintf(" • [%s] %s (%s)\n", ProtocolStyle.Render(d.Protocol), d.Name, d.Address))
+			addr := d.Address
+			if isMobileLike && len(addr) > 28 {
+				addr = addr[:25] + "..."
+			}
+			sb.WriteString(fmt.Sprintf(" • [%s] %s (%s)\n", ProtocolStyle.Render(d.Protocol), d.Name, addr))
 		}
-		sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu"))
+		sb.WriteString(HelpStyle.Render("\n[Enter/ESC] Return to Menu"))
+
+	case stateEnterpriseMenu:
+		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(RenderEnterpriseMenu(m.enterpriseChoices, m.enterpriseCursor, width))
+
+	case stateMatrixRunning, stateProtocolRunning, stateReplayRunning:
+		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(HelpStyle.Render("Enterprise Simulation • [ESC] Cancel • [q] Quit"))
+
+	case stateMatrixResults:
+		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(RenderMatrixResultsView(m.matrixResults, width))
+
+	case stateProtocolResults:
+		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(RenderProtocolResultsView(m.protocolResults, width))
+
+	case stateReplayResults:
+		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(RenderReplayResultsView(m.replayResult, width))
+
+	case stateAbout:
+		sb.WriteString(RenderPhaseBadge("ABOUT", "ABOUT") + "\n\n")
+		sb.WriteString(RenderAboutView(width))
 
 	case stateCheckRunning:
 		sb.WriteString(RenderPhaseBadge("CHECK", "CHECK") + "\n\n")
 		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
-		sb.WriteString(HelpStyle.Render("Running real-world connectivity diagnostics..."))
+		sb.WriteString(HelpStyle.Render("Running diagnostics... [ESC] Cancel"))
 
 	case stateCheckResults:
 		sb.WriteString(RenderPhaseBadge("CHECK", "CHECK") + "\n\n")
-		sb.WriteString(RenderCheckResultsView(m.checkResults))
+		sb.WriteString(RenderCheckResultsView(m.checkResults, width))
 
 	case stateTuneRunning:
 		sb.WriteString(RenderPhaseBadge("TUNE", "TUNE") + "\n\n")
 		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
-		sb.WriteString(HelpStyle.Render("Running RTT distribution & tuning analysis..."))
+		sb.WriteString(HelpStyle.Render("Running tuning analysis... [ESC] Cancel"))
 
 	case stateTuneResults:
 		sb.WriteString(RenderPhaseBadge("TUNE", "TUNE") + "\n\n")
-		sb.WriteString(RenderTuneResultsView(m.sortedResults, m.verdicts, m.opts))
+		sb.WriteString(RenderTuneResultsView(m.sortedResults, m.verdicts, m.opts, width))
 
 	case stateOfflineError:
 		sb.WriteString(RenderPhaseBadge("ERROR", "ERROR") + "\n\n")
-		sb.WriteString(RenderErrorCard(m.offlineReason))
+		sb.WriteString(RenderErrorCard(m.offlineReason, width))
 	}
 
-	return BoxStyle.Render(sb.String())
+	return currentBoxStyle.Render(sb.String())
 }

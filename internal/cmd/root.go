@@ -18,8 +18,10 @@ var rootCmd = &cobra.Command{
 		p := tea.NewProgram(ui.InitialModel(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error running command center: %v\n", err)
+			ui.PrintExitBranding()
 			os.Exit(1)
 		}
+		ui.PrintExitBranding()
 	},
 }
 

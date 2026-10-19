@@ -84,6 +84,7 @@ var (
 	PhaseServersStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87d7ff")).Background(lipgloss.Color("#005faf")).Padding(0, 1)
 	PhaseCheckStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87ffaf")).Background(lipgloss.Color("#00875f")).Padding(0, 1)
 	PhaseTuneStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#875f00")).Padding(0, 1)
+	PhaseAboutStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#5f3f00")).Padding(0, 1)
 	PhaseErrorStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(ColorError).Padding(0, 1)
 
 	RedAttentionStyle = lipgloss.NewStyle().

@@ -7,6 +7,7 @@ import (
 
 	"idt/internal/compare"
 	"idt/internal/config"
+	"idt/internal/enterprise"
 	"idt/internal/runner"
 	"idt/internal/tune"
 
@@ -30,6 +31,8 @@ func RenderPhaseBadge(stateName string, phase string) string {
 		return PhaseCheckStyle.Render(" 🔍 STATUS: CONNECTIVITY - DIAGNOSTICS ")
 	case "TUNE":
 		return PhaseTuneStyle.Render(" 📈 STATUS: TUNING - ANALYSIS & RECOMMENDATIONS ")
+	case "ABOUT":
+		return PhaseAboutStyle.Render(" ℹ️ STATUS: ABOUT US - CAPABILITIES & PRIVACY ")
 	case "ERROR":
 		return PhaseErrorStyle.Render(" 🚨 ATTENTION: NO INTERNET CONNECTION / STALLED NETWORK ")
 	default:
@@ -38,16 +41,16 @@ func RenderPhaseBadge(stateName string, phase string) string {
 }
 
 // RenderWarmupProgress renders the real-time animated warm-up checklist with checkmarks, active spinner, and pending states.
-func RenderWarmupProgress(step warmupStep, spinnerView string, connType string) string {
+func RenderWarmupProgress(step warmupStep, spinnerView string, connType string, width int) string {
 	var sb strings.Builder
 
 	// Step 1: Init
 	if step > stepInit {
-		sb.WriteString("  ✅ Initializing IDT Integrated Command Center & Configuration\n")
+		sb.WriteString("  ✅ Initializing IDT Command Center & Configuration\n")
 	} else if step == stepInit {
-		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render("Initializing IDT Integrated Command Center...")))
+		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render("Initializing IDT Command Center...")))
 	} else {
-		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Initializing IDT Integrated Command Center...") + "\n")
+		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Initializing IDT Command Center...") + "\n")
 	}
 
 	// Step 2: Network
@@ -56,37 +59,37 @@ func RenderWarmupProgress(step warmupStep, spinnerView string, connType string) 
 		if ct == "" {
 			ct = "Normal ISP Connection"
 		}
-		sb.WriteString(fmt.Sprintf("  ✅ Network Route & VPN Detection [%s]\n", ct))
+		sb.WriteString(fmt.Sprintf("  ✅ Route & VPN [%s]\n", ct))
 	} else if step == stepNetwork {
-		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorSecondary).Render("Detecting network route & VPN status...")))
+		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorSecondary).Render("Detecting network route & VPN...")))
 	} else {
-		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Network Route & VPN Detection...") + "\n")
+		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Route & VPN Detection...") + "\n")
 	}
 
 	// Step 3: Preflight
 	if step > stepPreflight {
-		sb.WriteString("  ✅ Public Resolver Reachability Check (1.1.1.1 / 8.8.8.8)\n")
+		sb.WriteString("  ✅ Public Resolver Check (1.1.1.1 / 8.8.8.8)\n")
 	} else if step == stepPreflight {
-		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorWarning).Render("Testing pre-flight public resolver reachability...")))
+		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorWarning).Render("Testing public resolver reachability...")))
 	} else {
-		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Public Resolver Reachability Check...") + "\n")
+		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Public Resolver Check...") + "\n")
 	}
 
 	// Step 4: Ready
 	if step > stepReady {
-		sb.WriteString("  ✅ Secure Resolvers & Connection Pools Prepared\n")
+		sb.WriteString("  ✅ Secure Resolvers & Pools Prepared\n")
 	} else if step == stepReady {
-		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorSuccess).Render("Preparing secure connection pools...")))
+		sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorSuccess).Render("Preparing connection pools...")))
 	} else {
-		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Secure Resolvers & Connection Pools Prepared...") + "\n")
+		sb.WriteString(lipgloss.NewStyle().Foreground(ColorMuted).Render("  ⏳ Secure Resolvers & Pools Ready...") + "\n")
 	}
 
-	sb.WriteString("\n" + HelpStyle.Render("Integrated Dashboard • Real-time Warm-up Progress & System Verification..."))
+	sb.WriteString("\n" + HelpStyle.Render("[ESC] Cancel • [q] Quit"))
 	return sb.String()
 }
 
 // RenderMenuChoices renders the interactive menu choices with cursor highlighting.
-func RenderMenuChoices(choices []string, cursor int) string {
+func RenderMenuChoices(choices []string, cursor int, width int) string {
 	var sb strings.Builder
 	sb.WriteString(TitleStyle.Render(" SELECT COMMAND / VIEW ") + "\n\n")
 	for i, choice := range choices {
@@ -96,52 +99,21 @@ func RenderMenuChoices(choices []string, cursor int) string {
 			sb.WriteString(MenuItemStyle.Render(choice) + "\n")
 		}
 	}
-	sb.WriteString(HelpStyle.Render("\n[↑/↓] Navigate • [Enter] Select • [q] Quit"))
+	sb.WriteString(HelpStyle.Render("\n[↑/↓] Navigate • [Enter] Select • [ESC] Menu • [q] Quit"))
 	return sb.String()
 }
 
 // RenderErrorCard renders the red attention error card for self-aware offline / stalled states.
-func RenderErrorCard(reason string) string {
-	errMsg := fmt.Sprintf("CRITICAL ERROR: %s\n\n❌ Self-awareness warmup check FAILED: The application cannot reach public resolvers (1.1.1.1 / 8.8.8.8).\nCheck your Wi-Fi, mobile data, airplane mode, or active VPN connection.", reason)
-	return RedAttentionStyle.Render(errMsg) + "\n\n" + HelpStyle.Render("[r] Retry Warmup • [Enter] Return to Menu • [q] Quit")
+func RenderErrorCard(reason string, width int) string {
+	errMsg := fmt.Sprintf("CRITICAL ERROR: %s\n\n❌ Warmup check FAILED: Cannot reach public resolvers (1.1.1.1 / 8.8.8.8).\nCheck Wi-Fi, mobile data, airplane mode, or VPN.", reason)
+	return RedAttentionStyle.Render(errMsg) + "\n\n" + HelpStyle.Render("[r] Retry • [ESC/Enter] Menu • [q] Quit")
 }
 
-// RenderCheckView renders real-world connectivity diagnostics telemetry.
-func RenderCheckView(opts config.Options, dialers []config.Dialer) string {
+// RenderCheckResultsView renders live connectivity check results with color spectrum and responsive adaptation.
+func RenderCheckResultsView(results []runner.Result, width int) string {
 	var sb strings.Builder
-	sb.WriteString(TitleStyle.Render(" 🔍 REAL-WORLD CONNECTIVITY & HEALTH CHECK ") + "\n\n")
-	sb.WriteString(fmt.Sprintf("Target Domain: %s\n", opts.Target))
-	sb.WriteString(fmt.Sprintf("Timeout Config: %v\n", opts.Timeout))
-	sb.WriteString(fmt.Sprintf("Jitter Window: %v - %v\n\n", opts.JitterMin, opts.JitterMax))
-	sb.WriteString("Healthy Check Endpoints:\n")
-	for i, d := range dialers {
-		if i >= 5 {
-			break
-		}
-		sb.WriteString(fmt.Sprintf("  ✅ [%s] %s (%s)\n", ProtocolStyle.Render(d.Protocol), d.Name, d.Address))
-	}
-	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu"))
-	return sb.String()
-}
-
-// RenderTuneView renders real-world tuning analysis parameters.
-func RenderTuneView(opts config.Options) string {
-	var sb strings.Builder
-	sb.WriteString(TitleStyle.Render(" 📈 RTT DISTRIBUTION & TUNING ANALYSIS ") + "\n\n")
-	sb.WriteString("Analysis Parameters:\n")
-	sb.WriteString(fmt.Sprintf(" • Max Dials Limit: %d\n", opts.MaxDials))
-	sb.WriteString(fmt.Sprintf(" • Dials per endpoint: %d\n", opts.Dials))
-	sb.WriteString(fmt.Sprintf(" • Target Verification Domain: %s\n\n", opts.Target))
-	sb.WriteString("Recommendation: Enable DoH/DoT encapsulation for optimal privacy and bypass of local network injection.\n")
-	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu"))
-	return sb.String()
-}
-
-// RenderCheckResultsView renders live connectivity check results with color spectrum and comprehensive details.
-func RenderCheckResultsView(results []runner.Result) string {
-	var sb strings.Builder
-	sb.WriteString(TitleStyle.Render(" 🔍 REAL-WORLD CONNECTIVITY & HEALTH CHECK ") + "\n\n")
-	sb.WriteString(Cyan(fmt.Sprintf("Health check — example.com — 5 dials — sequential (Color Spectrum: %s | %s | %s)\n\n",
+	sb.WriteString(TitleStyle.Render(" 🔍 CONNECTIVITY & HEALTH CHECK ") + "\n\n")
+	sb.WriteString(Cyan(fmt.Sprintf("Health check (Color Spectrum: %s | %s | %s)\n\n",
 		Green("Optimal"), Yellow("Warning"), Red("Unreachable"))))
 
 	var (
@@ -149,8 +121,16 @@ func RenderCheckResultsView(results []runner.Result) string {
 		stdLocal                 bool
 	)
 
+	addrLen := 40
+	if width > 0 && width < 70 {
+		addrLen = width - 28
+		if addrLen < 12 {
+			addrLen = 12
+		}
+	}
+
 	for _, r := range results {
-		status := Red("❌ no answer")
+		status := Red("❌ no ans")
 		if r.Summary.Count > 0 {
 			anySuccess = true
 			lat := r.Summary.Median
@@ -167,47 +147,162 @@ func RenderCheckResultsView(results []runner.Result) string {
 				}
 			}
 		} else {
-			status = Red("❌ unreachable / filtered")
+			status = Red("❌ filtered")
 		}
 
-		// Comprehensive detail: which is what and where
+		addr := r.Dialer.Address
+		if len(addr) > addrLen {
+			addr = addr[:addrLen-3] + "..."
+		}
+
 		protocolTag := Cyan("[" + r.Dialer.Protocol + "]")
-		sb.WriteString(fmt.Sprintf("  %-12s %-10s %-45s  %s\n",
-			Bold(r.Dialer.Name), protocolTag, Dim(r.Dialer.Address), status))
+		sb.WriteString(fmt.Sprintf("  %-10s %-8s %-*s  %s\n",
+			Bold(r.Dialer.Name), protocolTag, addrLen, Dim(addr), status))
 	}
 
-	sb.WriteString("\n" + Bold("SETTINGS & NETWORK RESOLUTION ANALYSIS:") + "\n")
+	sb.WriteString("\n" + Bold("RESOLUTION ANALYSIS:") + "\n")
 	switch {
 	case !anySuccess:
-		sb.WriteString("  " + Red("❌ No dialer reachable. Name resolution is broken.") + "\n")
-		sb.WriteString("     Guidance: Check airplane mode, Wi-Fi/cellular data, or VPN state.\n")
+		sb.WriteString("  " + Red("❌ No dialer reachable. Check network / VPN.") + "\n")
 	case !dohOK:
-		sb.WriteString("  " + Red("❌ Encrypted DoH dialers are unreachable.") + "\n")
-		sb.WriteString("     Guidance: Firewall blocking port 443 or captive portal active.\n")
+		sb.WriteString("  " + Red("❌ Encrypted DoH unreachable (port 443 blocked).") + "\n")
 	case !dotOK:
-		sb.WriteString("  " + Yellow("⚠ Settings Mismatch / Network Restriction: DoH works, but DoT (port 853) is blocked.") + "\n")
-		sb.WriteString("     Resolution: Android Private DNS (hostname mode) will NOT resolve here.\n")
-		sb.WriteString("     Fix: Switch network or use DoH-based upstreams in your app settings.\n")
+		sb.WriteString("  " + Yellow("⚠ DoT (port 853) blocked. Android Private DNS might fail.") + "\n")
 	default:
-		sb.WriteString("  " + Green("✅ All encrypted protocols (DoH + DoT) are fully reachable and optimal.") + "\n")
-		sb.WriteString("     Resolution: Your current settings (Private DNS / Termux upstreams) are fully supported.\n")
+		sb.WriteString("  " + Green("✅ Encrypted protocols (DoH + DoT) optimal.") + "\n")
 	}
 
 	if stdLocal {
-		sb.WriteString("  " + Yellow("⚠ Local Interception Notice: Standard port 53 is answering locally (VPN/ISP intercept).") + "\n")
-		sb.WriteString("     Resolution: Upstream DNS settings differ from local ISP defaults; encryption bypasses this.\n")
+		sb.WriteString("  " + Yellow("⚠ Local port 53 interception detected.") + "\n")
 	}
 
-	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu • [q] Quit"))
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Menu • [q] Quit"))
 	return sb.String()
 }
 
 // RenderTuneResultsView renders live tuning analysis results.
-func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.Verdict, opts config.Options) string {
+func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.Verdict, opts config.Options, width int) string {
 	var sb strings.Builder
-	sb.WriteString(TitleStyle.Render(" 📈 RTT DISTRIBUTION & TUNING ANALYSIS ") + "\n\n")
+	sb.WriteString(TitleStyle.Render(" 📈 RTT TUNING ANALYSIS ") + "\n\n")
 	rec := tune.GetRecommendationString(sorted, verdicts, opts)
 	sb.WriteString(rec)
-	sb.WriteString(HelpStyle.Render("\n[Enter] Return to Menu • [q] Quit"))
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Menu • [q] Quit"))
 	return sb.String()
 }
+
+// RenderAboutView renders About Us, capabilities, usage, branding, GitHub, contact email cyberzilla.systsms@gmail.com, and privacy/anti-copying legal notices with polished color and bullets.
+func RenderAboutView(width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" ℹ️ ABOUT US & APP CAPABILITIES ") + "\n\n")
+
+	sb.WriteString(Bold(Cyan("• BRANDING & ORGANIZATION:")) + "\n")
+	sb.WriteString(fmt.Sprintf("  %s\n\n", Yellow("FJ™ Cybertronic Systems")))
+
+	sb.WriteString(Bold(Cyan("• CORE APP CAPABILITIES & USAGE:")) + "\n")
+	sb.WriteString("  - High-performance network testing & DNS diagnostics command center.\n")
+	sb.WriteString("  - Multi-protocol connection benchmarking (DoH, DoT, Standard UDP/TCP).\n")
+	sb.WriteString("  - Mobile-optimized TUI interface designed for Termux and compact terminals.\n\n")
+
+	sb.WriteString(Bold(Cyan("• CONTACT & REPOSITORY:")) + "\n")
+	sb.WriteString("  - GitHub: https://github.com/cyberzilla-systems/idt\n")
+	sb.WriteString("  - Support / Inquiries: cyberzilla.systsms@gmail.com\n\n")
+
+	sb.WriteString(Bold(Red("• PRIVACY POLICY & LEGAL NOTICE:")) + "\n")
+	sb.WriteString("  - Anti-Copying / IP Protection: Unauthorized copying, distribution, or reverse engineering is strictly illegal and protected by law.\n")
+	sb.WriteString("  - Illegal Usage Prohibition: Any malicious, illegal, or unauthorized network probing is strictly prohibited. Violators will face legal prosecution.\n")
+
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Menu • [q] Quit"))
+	return sb.String()
+}
+
+// RenderEnterpriseMenu renders the advanced enterprise submenu choices with cursor highlighting.
+func RenderEnterpriseMenu(choices []string, cursor int, width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 🏢 ADVANCED ENTERPRISE & PROTOCOL SIMULATION ") + "\n\n")
+	for i, choice := range choices {
+		if i == cursor {
+			sb.WriteString(MenuSelectedStyle.Render(choice) + "\n")
+		} else {
+			sb.WriteString(MenuItemStyle.Render(choice) + "\n")
+		}
+	}
+	sb.WriteString(HelpStyle.Render("\n[↑/↓] Navigate • [Enter] Select • [ESC] Main Menu • [q] Quit"))
+	return sb.String()
+}
+
+// RenderMatrixResultsView renders remote office and data center performance matrix results.
+func RenderMatrixResultsView(results []enterprise.MatrixResult, width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 🌐 REMOTE OFFICE & DATA CENTER MATRIX ") + "\n\n")
+	sb.WriteString(Cyan("Validating latency, jitter, loss & SLA compliance across remote sites.\n\n"))
+
+	for _, r := range results {
+		statusColor := Green(r.SLAStatus)
+		if r.SLAStatus == "WARNING" {
+			statusColor = Yellow(r.SLAStatus)
+		} else if r.SLAStatus == "VIOLATED" {
+			statusColor = Red(r.SLAStatus)
+		}
+
+		pairName := fmt.Sprintf("%s ➔ %s", r.Source.Region, r.Destination.Region)
+		sb.WriteString(fmt.Sprintf("  %-18s | Latency: %-7v | Loss: %4.1f%% | Throughput: %4.0fMbps | %s\n",
+			Bold(pairName), r.Latency, r.Loss, r.Throughput, statusColor))
+	}
+
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Submenu • [q] Quit"))
+	return sb.String()
+}
+
+// RenderProtocolResultsView renders multi-protocol testing results under dynamic conditions.
+func RenderProtocolResultsView(results []enterprise.ProtocolTestResult, width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 📡 MULTI-PROTOCOL DYNAMIC SIMULATION ") + "\n\n")
+	sb.WriteString(Cyan("Testing HTTP/VoIP/SaaS/Custom apps across dynamic conditions.\n\n"))
+
+	for _, res := range results {
+		statusColor := Green(res.Status)
+		if res.Status == "DEGRADED" {
+			statusColor = Yellow(res.Status)
+		} else if res.Status == "CRITICAL" {
+			statusColor = Red(res.Status)
+		}
+
+		sb.WriteString(fmt.Sprintf("  %-22s [%s]\n", Bold(string(res.Config.Protocol)), Cyan(string(res.Config.Condition))))
+		sb.WriteString(fmt.Sprintf("    Target: %s\n", Dim(res.Config.TargetName)))
+		sb.WriteString(fmt.Sprintf("    Success: %5.1f%% | RTT: %-7v | Score: %3d/100 | Status: %s\n",
+			res.SuccessRate, res.AvgLatency, res.Score, statusColor))
+		sb.WriteString(fmt.Sprintf("    Details: %s\n\n", Dim(res.Details)))
+	}
+
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Submenu • [q] Quit"))
+	return sb.String()
+}
+
+// RenderReplayResultsView renders live traffic capture & lab replay simulation results.
+func RenderReplayResultsView(res enterprise.ReplayResult, width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" 📼 LIVE TRAFFIC CAPTURE & LAB REPLAY ") + "\n\n")
+	sb.WriteString(Cyan("Replaying production traffic in controlled lab setting before rollout.\n\n"))
+
+	sb.WriteString(fmt.Sprintf("  • Total Captured Packets: %d\n", res.TotalCaptured))
+	sb.WriteString(fmt.Sprintf("  • Successfully Replayed:  %d\n", res.TotalReplayed))
+	sb.WriteString(fmt.Sprintf("  • Dropped / Anomalies:    %d\n", res.DroppedPackets))
+	sb.WriteString(fmt.Sprintf("  • Replay Duration:        %v\n", res.ReplayDuration))
+	sb.WriteString(fmt.Sprintf("  • Average Replayed RTT:   %v\n", res.AvgReplayedRTT))
+
+	anomalyStatus := Green("NO ANOMALIES DETECTED")
+	if res.AnomalyDetected {
+		anomalyStatus = Red("ANOMALIES / LATENCY SPIKES DETECTED")
+	}
+	sb.WriteString(fmt.Sprintf("  • Rollout Readiness:      %s\n\n", anomalyStatus))
+
+	sb.WriteString(Bold("REPLAY TRANSACTION LOG:") + "\n")
+	for _, logLine := range res.LogSummary {
+		sb.WriteString("  " + logLine + "\n")
+	}
+
+	sb.WriteString(HelpStyle.Render("\n[ESC/Enter] Return to Submenu • [q] Quit"))
+	return sb.String()
+}
+
+
