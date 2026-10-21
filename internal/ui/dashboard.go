@@ -65,6 +65,7 @@ type Model struct {
 	warmupStep      warmupStep
 	connType        string
 	preflightMsg    string
+	startTime       time.Time
 	err             error
 	opts            config.Options
 	dialers         []config.Dialer
@@ -203,6 +204,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			if m.state == stateOfflineError {
 				m.state = stateWarmup
+				m.startTime = time.Now()
 				m.warmupStep = stepInit
 				m.loadingText = "Retrying IDT Warmup & Network Verification..."
 				return m, tea.Batch(m.spinner.Tick, tea.Tick(300*time.Millisecond, func(t time.Time) tea.Msg {
@@ -215,6 +217,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.cursor {
 				case 0, 1: // Run IDT Test or Dashboard
 					m.state = stateWarmup
+					m.startTime = time.Now()
 					m.warmupStep = stepInit
 					m.loadingText = "Initializing IDT Integrated Command Center..."
 					return m, tea.Batch(m.spinner.Tick, tea.Tick(400*time.Millisecond, func(t time.Time) tea.Msg {
@@ -225,10 +228,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				case 3: // Check
 					m.state = stateCheckRunning
+					m.startTime = time.Now()
 					m.loadingText = "Running real-world connectivity diagnostics..."
 					return m, tea.Batch(m.spinner.Tick, runCheckCmd())
 				case 4: // Tune
 					m.state = stateTuneRunning
+					m.startTime = time.Now()
 					m.loadingText = "Running RTT distribution & tuning analysis..."
 					return m, tea.Batch(m.spinner.Tick, runTuneCmd(m.opts, m.dialers))
 				case 5: // Enterprise Menu
@@ -245,14 +250,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.enterpriseCursor {
 				case 0: // Matrix
 					m.state = stateMatrixRunning
+					m.startTime = time.Now()
 					m.loadingText = "Simulating Remote Office & Data Center Performance Matrix..."
 					return m, tea.Batch(m.spinner.Tick, runMatrixCmd())
 				case 1: // Protocols
 					m.state = stateProtocolRunning
+					m.startTime = time.Now()
 					m.loadingText = "Running Multi-Protocol Synthetic Probes under Dynamic Conditions..."
 					return m, tea.Batch(m.spinner.Tick, runProtocolCmd())
 				case 2: // Replay
 					m.state = stateReplayRunning
+					m.startTime = time.Now()
 					m.loadingText = "Capturing and Replaying Live Production Traffic in Lab Setting..."
 					return m, tea.Batch(m.spinner.Tick, runReplayCmd())
 				case 3: // Back to Menu
@@ -336,6 +344,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stepReady:
 			return m, tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
 				m.state = stateRunning
+				m.startTime = time.Now()
 				m.loadingText = "Executing DNS & IP Dialers across protocols..."
 				return runTestCmd(m.opts, m.dialers)
 			})
@@ -551,12 +560,15 @@ func (m Model) View() string {
 		sb.WriteString(RenderMenuChoices(m.choices, m.cursor, width))
 
 	case stateWarmup:
+		elapsed := time.Since(m.startTime).Round(time.Second)
 		sb.WriteString(RenderPhaseBadge("WARMUP", "WARMUP") + "\n\n")
-		sb.WriteString(RenderWarmupProgress(m.warmupStep, m.spinner.View(), m.connType, width))
+		sb.WriteString(RenderWarmupProgress(m.warmupStep, m.spinner.View(), m.connType, width, elapsed))
 
 	case stateRunning:
+		elapsed := time.Since(m.startTime).Round(time.Second)
+		elapsedStr := fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
 		sb.WriteString(RenderPhaseBadge("RUNNING", "RUNNING") + "\n\n")
-		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(fmt.Sprintf("\n  %s %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText), Dim(elapsedStr)))
 		sb.WriteString(HelpStyle.Render("Integrated Dashboard • [ESC] Cancel • [q] Quit"))
 
 	case stateResults:
@@ -584,8 +596,10 @@ func (m Model) View() string {
 		sb.WriteString(RenderEnterpriseMenu(m.enterpriseChoices, m.enterpriseCursor, width))
 
 	case stateMatrixRunning, stateProtocolRunning, stateReplayRunning:
+		elapsed := time.Since(m.startTime).Round(time.Second)
+		elapsedStr := fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
 		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
-		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(fmt.Sprintf("\n  %s %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText), Dim(elapsedStr)))
 		sb.WriteString(HelpStyle.Render("Enterprise Simulation • [ESC] Cancel • [q] Quit"))
 
 	case stateMatrixResults:
@@ -605,8 +619,10 @@ func (m Model) View() string {
 		sb.WriteString(RenderAboutView(width))
 
 	case stateCheckRunning:
+		elapsed := time.Since(m.startTime).Round(time.Second)
+		elapsedStr := fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
 		sb.WriteString(RenderPhaseBadge("CHECK", "CHECK") + "\n\n")
-		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(fmt.Sprintf("\n  %s %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText), Dim(elapsedStr)))
 		sb.WriteString(HelpStyle.Render("Running diagnostics... [ESC] Cancel"))
 
 	case stateCheckResults:
@@ -614,8 +630,10 @@ func (m Model) View() string {
 		sb.WriteString(RenderCheckResultsView(m.checkResults, width))
 
 	case stateTuneRunning:
+		elapsed := time.Since(m.startTime).Round(time.Second)
+		elapsedStr := fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
 		sb.WriteString(RenderPhaseBadge("TUNE", "TUNE") + "\n\n")
-		sb.WriteString(fmt.Sprintf("\n  %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText)))
+		sb.WriteString(fmt.Sprintf("\n  %s %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText), Dim(elapsedStr)))
 		sb.WriteString(HelpStyle.Render("Running tuning analysis... [ESC] Cancel"))
 
 	case stateTuneResults:

@@ -40,8 +40,8 @@ func RenderPhaseBadge(stateName string, phase string) string {
 	}
 }
 
-// RenderWarmupProgress renders a sleek real-time animated warm-up checklist with precise step tracking.
-func RenderWarmupProgress(step warmupStep, spinnerView string, connType string, width int) string {
+// RenderWarmupProgress renders a sleek real-time animated warm-up checklist with precise step tracking and elapsed time.
+func RenderWarmupProgress(step warmupStep, spinnerView string, connType string, width int, elapsed time.Duration) string {
 	var sb strings.Builder
 	sb.WriteString(TitleStyle.Render(" SYSTEM INITIALIZATION & PREFLIGHT ") + "\n\n")
 
@@ -50,7 +50,8 @@ func RenderWarmupProgress(step warmupStep, spinnerView string, connType string, 
 		if step > targetStep {
 			sb.WriteString(fmt.Sprintf("  %s %s\n", Green("✔"), label))
 		} else if step == targetStep {
-			sb.WriteString(fmt.Sprintf("  %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(activeText)))
+			elapsedStr := fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
+			sb.WriteString(fmt.Sprintf("  %s %s %s\n", spinnerView, lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(activeText), Dim(elapsedStr)))
 		} else {
 			sb.WriteString(fmt.Sprintf("  %s %s\n", Dim("•"), Dim(label)))
 		}

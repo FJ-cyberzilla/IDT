@@ -16,6 +16,15 @@ In modern network engineering and distributed enterprise architectures, validati
 
 ---
 
+## 🔒 Core Security, DNS Verification & Anti-Hijack Features
+
+- **🛡️ Non-Leaking DNS Probing**: Validates Google DNS (`8.8.8.8`), Cloudflare DNS (`1.1.1.1`), DoH, and DoT endpoints securely with or without an active VPN tunnel (`tun0`) without disrupting or leaking system DNS settings.
+- **🚨 Automated Hijacking & Tampering Detection**: Performs live cryptographic and semantic comparisons against trusted Cloudflare/Google DoH authoritative ground-truth records. Automatically flags local interception and DNS hijacking (`mismatch`).
+- **⏱️ Real-Time Elapsed Time Tracking**: Features live elapsed time counters (`[MM:SS]`) during preflight warmup, connection pool allocation, and diagnostic/tuning runs.
+- **📈 Jitter & Ping Interaction Tracking**: Computes composite stability scores (`Median + Jitter × 1.5 - SuccessBonus`) prioritizing stability over raw speed.
+
+---
+
 ## 🏢 Advanced Enterprise & Protocol Simulation Modules (`internal/enterprise/`)
 
 1. **🌐 Remote Office & Data Center Performance Matrix (`matrix.go`)**:
@@ -26,17 +35,6 @@ In modern network engineering and distributed enterprise architectures, validati
    - Computes protocol-specific health scores (0-100) and actionable diagnostics.
 3. **📼 Live Traffic Capture & Lab Replay Simulator (`replay.go`)**:
    - Captures and replays live production traffic records in a controlled lab setting with configurable speed multipliers (1.0x - 10.0x), jitter injection, packet drop simulation, and automated anomaly detection.
-
----
-
-## 🛠️ Core Capabilities
-
-- **🚀 Interactive Bubble Tea TUI Command Center**: Real-time terminal dashboard featuring animated warm-up checklists, gateway discovery, VPN/ISP inspection, responsive terminal adaptation (Termux/mobile friendly), and dedicated advanced TUI submenus.
-- **🌐 Multi-Protocol DNS & Resolver Stack**: Native support for **DoH** (RFC 8484), **DoT** (RFC 7858), and **Standard UDP/TCP** resolvers.
-- **🛡️ Vault Instrumentation & Live Resolver Pool (`internal/vault/`)**: Encrypted seed candidate parsing, UDP port 53 probing, baseline oracle validation, and JSONL telemetry logging.
-- **⚡ Optimized Connection Pooling & Performance**: Zero-allocation hot paths, concurrent worker semaphores, and HTTP/2 transport keep-alives.
-- **🛡️ Self-Aware Offline & Private DNS Detection**: Pre-flight reachability checks and Android Private DNS stall handling.
-- **🎨 FJ™ Cybertronic Systems Vintage Orange Branding**: Distinctive TrueColor `#ff8700` banners and exit branding.
 
 ---
 
