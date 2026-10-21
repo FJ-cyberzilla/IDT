@@ -14,6 +14,12 @@ var rootCmd = &cobra.Command{
 	Use:   "idt",
 	Short: "IDT - Professional Internet Dialer Test & Command Center",
 	Long:  `IDT is a professional network testing, DNS diagnostics, and latency benchmarking command center built with Cobra and Lip Gloss.`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) > 0 {
+			return fmt.Errorf("unknown command or argument %q", args[0])
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		p := tea.NewProgram(ui.InitialModel(), tea.WithAltScreen())
 		if _, err := p.Run(); err != nil {

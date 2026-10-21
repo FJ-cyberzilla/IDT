@@ -83,7 +83,8 @@ func InitialModel() Model {
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(ColorPrimary)
 
-	opts, dialers, _ := config.Load()
+	opts := config.DefaultOptions()
+	dialers := config.NormalizeDialers(config.DefaultDialers())
 
 	return Model{
 		state: stateMenu,

@@ -1,97 +1,147 @@
 package ui
 
-import (
-	"github.com/charmbracelet/lipgloss"
+import "github.com/charmbracelet/lipgloss"
+
+// Elite Cyber-Slate & Neon Palette
+var (
+        ColorPrimary   = lipgloss.Color("#00F0FF") // Electric Cyan
+        ColorSecondary = lipgloss.Color("#7000FF") // Deep Indigo
+        ColorSuccess   = lipgloss.Color("#00FF66") // Neon Green
+        ColorWarning   = lipgloss.Color("#FFB800") // Amber Warning
+        ColorError     = lipgloss.Color("#FF0055") // Cyber Red
+        ColorMuted     = lipgloss.Color("#4A5568") // Slate Gray
+        ColorText      = lipgloss.Color("#E2E8F0") // Light Off-White
+        ColorSubtext   = lipgloss.Color("#A0AEC0") // Muted Text
+        ColorSurface   = lipgloss.Color("#1A202C") // Dark Card Surface
+        ColorBorder    = lipgloss.Color("#2D3748") // Crisp Border Gray
 )
 
+// Global Lipgloss Styles
 var (
-	// Color Palette
-	ColorPrimary   = lipgloss.Color("#00d7ff") // Cyan
-	ColorSecondary = lipgloss.Color("#af87ff") // Purple
-	ColorSuccess   = lipgloss.Color("#00ffaf") // Emerald
-	ColorWarning   = lipgloss.Color("#ffaf00") // Amber
-	ColorError     = lipgloss.Color("#ff5f5f") // Crimson
-	ColorMuted     = lipgloss.Color("#585858") // Gray
-	ColorBg        = lipgloss.Color("#1c1c1c") // Dark Gray
+        BoxStyle = lipgloss.NewStyle().
+                Border(lipgloss.RoundedBorder()).
+                BorderForeground(ColorBorder).
+                Background(ColorSurface).
+                Padding(1, 2)
 
-	// Base Box & Margins
-	BoxStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ColorPrimary).
-			Padding(1, 2).
-			Margin(1, 1).
-			Background(ColorBg)
+        TitleStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Bold(true).
+                BorderStyle(lipgloss.NormalBorder()).
+                BorderBottom(true).
+                BorderForeground(ColorBorder).
+                PaddingBottom(0).
+                MarginBottom(1)
 
-	HeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(ColorPrimary).
-			BorderStyle(lipgloss.NormalBorder()).
-			BorderBottom(true).
-			BorderForeground(ColorSecondary).
-			PaddingBottom(1).
-			MarginBottom(1)
+        SubtitleStyle = lipgloss.NewStyle().
+                Foreground(ColorSubtext).
+                Italic(true)
 
-	TitleStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#ffffff")).
-			Background(ColorPrimary).
-			Padding(0, 1)
+        MenuItemStyle = lipgloss.NewStyle().
+                Foreground(ColorText).
+                PaddingLeft(2)
 
-	StatusSuccessStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(ColorSuccess).
-				SetString("✔ MATCH")
+        MenuSelectedStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Background(lipgloss.Color("#22303F")).
+                Bold(true).
+                PaddingLeft(2).
+                Border(lipgloss.NormalBorder(), false, false, false, true).
+                BorderForeground(ColorPrimary)
 
-	StatusWarningStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(ColorWarning).
-				SetString("⚠ PARTIAL")
+        BadgeSuccess = lipgloss.NewStyle().
+                Foreground(lipgloss.Color("#000000")).
+                Background(ColorSuccess).
+                Bold(true).
+                Padding(0, 1)
 
-	StatusErrorStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(ColorError).
-				SetString("✖ MISMATCH")
+        BadgeWarning = lipgloss.NewStyle().
+                Foreground(lipgloss.Color("#000000")).
+                Background(ColorWarning).
+                Bold(true).
+                Padding(0, 1)
 
-	ProtocolStyle = lipgloss.NewStyle().
-			Foreground(ColorSecondary).
-			Bold(true)
+        BadgeError = lipgloss.NewStyle().
+                Foreground(lipgloss.Color("#FFFFFF")).
+                Background(ColorError).
+                Bold(true).
+                Padding(0, 1)
 
-	HelpStyle = lipgloss.NewStyle().
-			Foreground(ColorMuted).
-			Italic(true).
-			MarginTop(1)
+        FooterStyle = lipgloss.NewStyle().
+                Foreground(ColorMuted).
+                MarginTop(1)
 
-	MenuItemStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ffffff")).
-			PaddingLeft(2)
+        PhaseMenuStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
 
-	MenuSelectedStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(ColorPrimary).
-				Background(lipgloss.Color("#262626")).
-				PaddingLeft(2).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderLeft(true).
-				BorderForeground(ColorPrimary)
+        PhaseInitStyle = lipgloss.NewStyle().
+                Foreground(ColorWarning).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
 
-	// Phase / Dynamic Status Badge Styles
-	PhaseMenuStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffff")).Background(lipgloss.Color("#005f5f")).Padding(0, 1)
-	PhaseInitStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffff00")).Background(lipgloss.Color("#5f5f00")).Padding(0, 1)
-	PhaseNetworkStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#af87ff")).Background(lipgloss.Color("#4f0080")).Padding(0, 1)
-	PhaseReadyStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ffaf")).Background(lipgloss.Color("#005f3f")).Padding(0, 1)
-	PhaseRunningStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00d7ff")).Background(lipgloss.Color("#005f87")).Padding(0, 1)
-	PhaseResultsStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00ff87")).Background(lipgloss.Color("#005f00")).Padding(0, 1)
-	PhaseServersStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87d7ff")).Background(lipgloss.Color("#005faf")).Padding(0, 1)
-	PhaseCheckStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#87ffaf")).Background(lipgloss.Color("#00875f")).Padding(0, 1)
-	PhaseTuneStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#875f00")).Padding(0, 1)
-	PhaseAboutStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffaf00")).Background(lipgloss.Color("#5f3f00")).Padding(0, 1)
-	PhaseErrorStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(ColorError).Padding(0, 1)
+        PhaseRunningStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
 
-	RedAttentionStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(ColorError).
-				BorderStyle(lipgloss.RoundedBorder()).
-				BorderForeground(ColorError).
-				Padding(1, 2).
-				Margin(1, 0)
+        PhaseResultsStyle = lipgloss.NewStyle().
+                Foreground(ColorSuccess).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        PhaseServersStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        PhaseCheckStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        PhaseTuneStyle = lipgloss.NewStyle().
+                Foreground(ColorSecondary).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        PhaseAboutStyle = lipgloss.NewStyle().
+                Foreground(ColorSubtext).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        PhaseErrorStyle = lipgloss.NewStyle().
+                Foreground(ColorError).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(0, 1)
+
+        HelpStyle = lipgloss.NewStyle().
+                Foreground(ColorSubtext).
+                Italic(true)
+
+        ProtocolStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Bold(true)
+
+        RedAttentionStyle = lipgloss.NewStyle().
+                Foreground(ColorError).
+                Background(ColorSurface).
+                Bold(true).
+                Padding(1, 2).
+                Border(lipgloss.RoundedBorder()).
+                BorderForeground(ColorError)
+
+        HeaderStyle = lipgloss.NewStyle().
+                Foreground(ColorPrimary).
+                Bold(true)
 )

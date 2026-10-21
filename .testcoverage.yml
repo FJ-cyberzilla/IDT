@@ -1,0 +1,61 @@
+# go-test-coverage configuration
+# https://github.com/vladopajic/go-test-coverage
+
+project:
+  laws:
+    - rule: min-coverage
+      # Overall minimum coverage threshold
+      value: 75
+  exclude:
+    paths:
+      - main.go
+      - internal/dialer/standard.go
+      - internal/ui/theme.go
+      - internal/ui/color.go
+
+profiles:
+  - name: configs
+    path: idt/configs
+    threshold: 100
+  - name: vault
+    path: idt/internal/vault
+    threshold: 80
+  - name: dialer
+    path: idt/internal/dialer
+    threshold: 70
+  - name: errorhandling
+    path: idt/internal/errorhandling
+    threshold: 80
+  - name: enterprise
+    path: idt/internal/enterprise
+    threshold: 80
+  - name: compare
+    path: idt/internal/compare
+    threshold: 80
+  - name: helper
+    path: idt/internal/helper
+    threshold: 80
+  - name: stats
+    path: idt/internal/stats
+    threshold: 80
+  - name: config
+    path: idt/internal/config
+    threshold: 80
+  - name: runner
+    path: idt/internal/runner
+    threshold: 70
+  - name: output
+    path: idt/internal/output
+    threshold: 70
+  - name: tune
+    path: idt/internal/tune
+    threshold: 70
+  - name: check
+    path: idt/internal/check
+    threshold: 60
+  - name: cmd
+    path: idt/internal/cmd
+    threshold: 60
+  - name: ui
+    path: idt/internal/ui
+    threshold: 60
