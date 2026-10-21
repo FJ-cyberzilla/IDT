@@ -1,4 +1,5 @@
-# IDT (Intelligent DNS Tool & Enterprise Simulation Suite) 🚀
+# IDT 
+## (Intelligent DNS Tool & Enterprise Simulation Suite) 🚀
 
 [![Go Version](https://img.shields.io/badge/Go-1.21%2B-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![Cobra CLI](https://img.shields.io/badge/CLI-Cobra-1B1F23?style=flat&logo=github)](https://github.com/spf13/cobra)
@@ -58,7 +59,3 @@ go build -o idt .
 - **Branding**: FJ™ Cybertronic Systems
 
 ---
-
-## 📄 License
-
-Distributed under the **MIT License**. See [LICENSE](LICENSE) for more information.
