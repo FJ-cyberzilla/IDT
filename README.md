@@ -16,25 +16,17 @@ In modern network engineering and distributed enterprise architectures, validati
 
 ---
 
-## 🔒 Core Security, DNS Verification & Anti-Hijack Features
+## 🔒 Core Capabilities, System DNS Discovery & Resilience
 
-- **🛡️ Non-Leaking DNS Probing**: Validates Google DNS (`8.8.8.8`), Cloudflare DNS (`1.1.1.1`), DoH, and DoT endpoints securely with or without an active VPN tunnel (`tun0`) without disrupting or leaking system DNS settings.
-- **🚨 Automated Hijacking & Tampering Detection**: Performs live cryptographic and semantic comparisons against trusted Cloudflare/Google DoH authoritative ground-truth records. Automatically flags local interception and DNS hijacking (`mismatch`).
-- **⏱️ Real-Time Elapsed Time Tracking**: Features live elapsed time counters (`[MM:SS]`) during preflight warmup, connection pool allocation, and diagnostic/tuning runs.
-- **📈 Jitter & Ping Interaction Tracking**: Computes composite stability scores (`Median + Jitter × 1.5 - SuccessBonus`) prioritizing stability over raw speed.
-
----
-
-## 🏢 Advanced Enterprise & Protocol Simulation Modules (`internal/enterprise/`)
-
-1. **🌐 Remote Office & Data Center Performance Matrix (`matrix.go`)**:
-   - Concurrently simulates and measures latency, jitter, packet loss, and throughput across virtual enterprise remote offices and data centers (New York, San Francisco, London, Frankfurt, Tokyo, Sydney).
-   - Computes SLA compliance status (`OPTIMAL`, `WARNING`, `VIOLATED`) with precision metrics.
-2. **📡 Multi-Protocol Dynamic Testing (`protocols.go`)**:
-   - Tests a variety of protocols (**HTTP/REST API**, **VoIP / SIP-RTP**, **SaaS / M365 / Salesforce**, **Custom App TCP/UDP**) across dynamic network conditions (Normal, High Congestion, Extreme Jitter, Packet Loss/Drop).
-   - Computes protocol-specific health scores (0-100) and actionable diagnostics.
-3. **📼 Live Traffic Capture & Lab Replay Simulator (`replay.go`)**:
-   - Captures and replays live production traffic records in a controlled lab setting with configurable speed multipliers (1.0x - 10.0x), jitter injection, packet drop simulation, and automated anomaly detection.
+- **🌐 Automated Multi-Platform System DNS Discovery (`internal/config/system_dns.go`)**: Automatically detects and probes system DNS resolvers non-conflictually across Windows PowerShell (`Get-DnsClientServerAddress` / `ipconfig`), WSL 2 host bridges (`/mnt/c/`), Android system properties (`net.dns1`), Termux (`/etc/resolv.conf`), DoH, and DoT.
+- **⚡ Token-Bucket Rate Limiter (`internal/helper/ratelimit.go`)**: Enterprise-grade rate limiting protecting upstream resolvers from 429 rate-limiting and IP flagging.
+- **🔄 Automated Stall Reset & Retry Handling (`internal/runner/runner.go`)**: Intelligent network stall detection with automatic single retry and fallback reporting ("Not reachable this time") upon persistent failure.
+- **📡 Multi-Protocol Dialer Suite (`internal/dialer/`)**: Supports DNS-over-HTTPS (DoH), DNS-over-TLS (DoT), Standard UDP/TCP, UDP Datagram Probes (`udp.go`), and custom Wire encoders/decoders.
+- **🏢 Advanced Enterprise Simulation (`internal/enterprise/`)**:
+  - **DNSSEC Audit (`dnssec.go`)**: Validates cryptographic trust chains and signature validity.
+  - **Timezone Analytics (`timezone.go`)**: Analyzes temporal routing latency across global timezones.
+  - **Remote Office Matrix (`matrix.go`)**: Simulates latency and SLA compliance across global data centers.
+  - **Live Traffic Replay (`replay.go`)**: Replays production traffic capture logs with configurable speed multipliers.
 
 ---
 
@@ -47,7 +39,7 @@ Ensure **Go 1.21+** is installed.
 git clone https://github.com/cyberzilla-systems/idt.git
 cd idt
 
-# Run tests
+# Run tests across all 15 packages
 go test -count=1 ./...
 
 # Build the binary

@@ -96,3 +96,14 @@ func TestIsPrivateIP(t *testing.T) {
 		t.Error("expected invalid IP string to return false")
 	}
 }
+
+func TestRateLimiter(t *testing.T) {
+	rl := NewRateLimiter(100.0, 5)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := rl.Wait(ctx)
+	if err != nil {
+		t.Fatalf("unexpected rate limiter wait error: %v", err)
+	}
+}

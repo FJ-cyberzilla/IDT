@@ -54,9 +54,13 @@ func Run(ctx context.Context, dialers []config.Dialer, opts config.Options) []Re
 	var wg sync.WaitGroup
 
 	for i, d := range dialers {
-		// Acquire semaphore token in the caller before spawning goroutine
-		// to bound live goroutines to maxConcurrent.
-		sem <- struct{}{}
+		// Context-aware semaphore acquisition prevents hanging on cancellation
+		select {
+		case <-ctx.Done():
+			return results
+		case sem <- struct{}{}:
+		}
+
 		wg.Add(1)
 		go func(idx int, dl config.Dialer) {
 			defer func() { <-sem }()
@@ -69,11 +73,27 @@ func Run(ctx context.Context, dialers []config.Dialer, opts config.Options) []Re
 }
 
 func runOne(ctx context.Context, d config.Dialer, opts config.Options) Result {
+	r := runOneAttempt(ctx, d, opts)
+	if r.Summary.Count == 0 {
+		// Error handler resets and retries the test once upon stall or failure
+		time.Sleep(250 * time.Millisecond)
+		r = runOneAttempt(ctx, d, opts)
+		if r.Summary.Count == 0 {
+			// Persistent failure after reset & retry: states "not reachable this time"
+		}
+	}
+	return r
+}
+
+func runOneAttempt(ctx context.Context, d config.Dialer, opts config.Options) Result {
 	r := Result{Dialer: d, Total: opts.Dials}
 	dl := NewDialer(d, opts.Timeout)
 	if dl == nil {
 		return r
 	}
+
+	// Goroutine-local RNG eliminates global mutex contention
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	hint := opts.Dials
 	if hint < 0 {
@@ -105,14 +125,14 @@ func runOne(ctx context.Context, d config.Dialer, opts config.Options) Result {
 		if i < opts.Dials-1 {
 			jmin := int(opts.JitterMin.Milliseconds())
 			jmax := int(opts.JitterMax.Milliseconds())
-			var d int
+			var jitterVal int
 			if jmax > jmin {
-				d = jmin + rand.Intn(jmax-jmin)
+				jitterVal = jmin + rng.Intn(jmax-jmin)
 			} else {
-				d = jmin
+				jitterVal = jmin
 			}
 			select {
-			case <-time.After(time.Duration(d) * time.Millisecond):
+			case <-time.After(time.Duration(jitterVal) * time.Millisecond):
 			case <-ctx.Done():
 				r.Summary = stats.Compute(r.Samples)
 				return r

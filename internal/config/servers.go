@@ -63,7 +63,8 @@ var SafeTargets = []string{
 }
 
 func DefaultDialers() []Dialer {
-	return []Dialer{
+	discovered := GetDiscoveredDialers()
+	base := []Dialer{
 		{"Cloudflare", ProtoDoH, "https://cloudflare-dns.com/dns-query"},
 		{"Cloudflare", ProtoDoT, "one.one.one.one:853"},
 		{"Cloudflare", ProtoStandard, "1.1.1.1:53"},
@@ -96,6 +97,11 @@ func DefaultDialers() []Dialer {
 		{"ControlD", ProtoDoT, "p0.freedns.controld.com:853"},
 		{"ControlD", ProtoStandard, "76.76.2.0:53"},
 	}
+
+	if len(discovered) > 0 {
+		return append(discovered, base...)
+	}
+	return base
 }
 
 func DefaultOptions() Options {

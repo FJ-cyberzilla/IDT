@@ -158,7 +158,14 @@ Classifies network and protocol errors into actionable categories (Timeout, Netw
 ### 8.3 Robust Lookup & Fallback Strategy (`internal/errorhandling/fallback.go`)
 Specifically engineered to handle Android Private DNS and disconnected VPN stalls:
 - **`IsAndroidPrivateDNSFailure`**: Detects system connection rejections (`ENETUNREACH`, `ECONNREFUSED`, dial timeouts) caused by Android enforcing Private DNS when the VPN tunnel is offline.
-- **`RobustLookupWithFallback`**: Bypasses stalled system stub resolvers by executing direct low-level UDP/TCP bootstrap queries to public resolvers (`1.1.1.1` / `8.8.8.8`) with strict timeout bounds (1.5s - 2s), preventing command stalls and ensuring graceful error recovery and dynamic status reporting.
+- **`RobustLookupWithFallback`**: Bypasses stalled system stub resolvers by executing direct low-level UDP/TCP bootstrap queries to public resolvers with strict timeout bounds (1.5s - 2s), preventing command stalls and ensuring graceful error recovery and dynamic status reporting.
+
+### 8.4 Automated System DNS Discovery (`internal/config/system_dns.go`)
+- Automatically examines and tests whatever DNS is configured across operating systems non-conflictually:
+  - **Windows PowerShell / `ipconfig`**: Parses active network adapter and client DNS server addresses via `ipconfig /all` and PowerShell (`Get-DnsClientServerAddress`).
+  - **WSL 2**: Inspects WSL guest resolver (`/etc/resolv.conf`) and queries Windows host DNS bridge/PowerShell seamlessly.
+  - **Android & Termux**: Inspects system properties (`net.dns1`, `net.dns2`, private DNS specifiers) and Termux `/etc/resolv.conf`.
+  - **DoH & DoT**: Detects encrypted transport endpoints configured in environment or system settings.
 
 ---
 

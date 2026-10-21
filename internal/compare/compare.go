@@ -28,25 +28,60 @@ func Compare(observed, truth []net.IP) Verdict {
 	if len(truth) == 0 || len(observed) == 0 {
 		return v
 	}
-	want := map[string]bool{}
+
+	// Build reference map for truth set with normalized IP strings
+	want := make(map[string]bool)
 	for _, ip := range truth {
-		want[ip.String()] = true
+		if normalized := normalizeIP(ip); normalized != "" {
+			want[normalized] = true
+		}
 	}
+
+	v.SampleWant = ipStrings(truth)
+
+	// Deduplicate observed IPs to prevent skewed totals from repeated answers
+	seenObserved := make(map[string]bool)
+	var uniqueObserved []net.IP
 	for _, ip := range observed {
+		norm := normalizeIP(ip)
+		if norm != "" && !seenObserved[norm] {
+			seenObserved[norm] = true
+			uniqueObserved = append(uniqueObserved, ip)
+		}
+	}
+
+	for _, ip := range uniqueObserved {
 		v.Total++
-		if want[ip.String()] {
+		norm := normalizeIP(ip)
+		if want[norm] {
 			v.Matches++
 		}
 	}
-	v.SampleGot = ipStrings(observed)
-	v.SampleWant = ipStrings(truth)
+
+	v.SampleGot = ipStrings(uniqueObserved)
 	return v
 }
 
+// normalizeIP standardizes IP string representation to handle IPv4/IPv6 nuances safely.
+func normalizeIP(ip net.IP) string {
+	if ip == nil {
+		return ""
+	}
+	if ip4 := ip.To4(); ip4 != nil {
+		return ip4.String()
+	}
+	return ip.String()
+}
+
 func ipStrings(ips []net.IP) []string {
-	out := make([]string, 0, len(ips))
+	seen := make(map[string]bool)
+	var out []string
 	for _, ip := range ips {
-		out = append(out, ip.String())
+		norm := normalizeIP(ip)
+		if norm != "" && !seen[norm] {
+			seen[norm] = true
+			out = append(out, norm)
+		}
 	}
 	sort.Strings(out)
 	return out

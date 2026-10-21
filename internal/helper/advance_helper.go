@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+// Pre-parsed private and CGNAT subnets to avoid redundant parsing overhead on every IsPrivateIP call.
+var parsedPrivSubnets []*net.IPNet
+
+func init() {
+	privCIDRs := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"100.64.0.0/10", // CGNAT
+		"fc00::/7",      // Unique local IPv6
+		"fe80::/10",     // Link-local IPv6
+	}
+
+	for _, cidr := range privCIDRs {
+		_, subnet, err := net.ParseCIDR(cidr)
+		if err == nil && subnet != nil {
+			parsedPrivSubnets = append(parsedPrivSubnets, subnet)
+		}
+	}
+}
+
 // SafeRun executes a function with panic recovery, converting any panic into a structured error
 // and logging stack trace info to prevent silent crashes in network diagnostic routines.
 func SafeRun(fn func() error) (err error) {
@@ -118,23 +139,14 @@ func IsPrivateIP(ipStr string) bool {
 	if ip == nil {
 		return false
 	}
-	// Check loopback, link-local, private IPv4/IPv6
+	// Check loopback, link-local unicast/multicast
 	if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
 		return true
 	}
 
-	privCIDRs := []string{
-		"10.0.0.0/8",
-		"172.16.0.0/12",
-		"192.168.0.0/16",
-		"100.64.0.0/10", // CGNAT
-		"fc00::/7",      // Unique local IPv6
-		"fe80::/10",     // Link-local IPv6
-	}
-
-	for _, cidr := range privCIDRs {
-		_, subnet, err := net.ParseCIDR(cidr)
-		if err == nil && subnet.Contains(ip) {
+	// Check against pre-parsed private/CGNAT subnets
+	for _, subnet := range parsedPrivSubnets {
+		if subnet.Contains(ip) {
 			return true
 		}
 	}

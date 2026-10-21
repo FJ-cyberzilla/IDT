@@ -64,12 +64,30 @@ func RunTrafficReplay(ctx context.Context, events []TrafficEvent, cfg ReplayConf
 
 	sem := make(chan struct{}, 3)
 
-	for _, ev := range events {
-		sem <- struct{}{}
+	for i, ev := range events {
+		// Context-aware semaphore acquisition prevents hanging on cancellation
+		select {
+		case <-ctx.Done():
+			duration := time.Since(start)
+			return ReplayResult{
+				TotalCaptured:   len(events),
+				TotalReplayed:   replayedCount,
+				DroppedPackets:  droppedCount,
+				ReplayDuration:  duration,
+				AvgReplayedRTT:  0,
+				AnomalyDetected: anomaly,
+				LogSummary:      logs,
+			}
+		case sem <- struct{}{}:
+		}
+
 		wg.Add(1)
-		go func(e TrafficEvent) {
+		go func(index int, e TrafficEvent) {
 			defer func() { <-sem }()
 			defer wg.Done()
+
+			// Goroutine-local RNG eliminates global mutex contention
+			rng := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 
 			select {
 			case <-ctx.Done():
@@ -80,12 +98,12 @@ func RunTrafficReplay(ctx context.Context, events []TrafficEvent, cfg ReplayConf
 			// Simulate processing / replay delay adjusted by speed multiplier
 			simulatedRTT := time.Duration(float64(e.OriginalRTT) / cfg.SpeedMultiplier)
 			if cfg.InjectJitter {
-				jitter := time.Duration(rand.Intn(15)) * time.Millisecond
+				jitter := time.Duration(rng.Intn(15)) * time.Millisecond
 				simulatedRTT += jitter
 			}
 
 			isDropped := false
-			if cfg.SimulateDrop && rand.Float64() < 0.15 {
+			if cfg.SimulateDrop && rng.Float64() < 0.15 {
 				isDropped = true
 			}
 
@@ -106,7 +124,7 @@ func RunTrafficReplay(ctx context.Context, events []TrafficEvent, cfg ReplayConf
 				}
 				logs = append(logs, fmt.Sprintf("✅ REPLAYED [Lab %s] %s %s -> RTT: %v [%s]", e.ID, e.HttpMethod, e.Endpoint, simulatedRTT, statusNote))
 			}
-		}(ev)
+		}(i, ev)
 	}
 	wg.Wait()
 

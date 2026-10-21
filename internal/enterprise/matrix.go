@@ -20,14 +20,14 @@ type OfficeLocation struct {
 
 // MatrixResult holds performance metrics between two locations.
 type MatrixResult struct {
-	Source      OfficeLocation        `json:"source"`
-	Destination OfficeLocation        `json:"destination"`
-	Latency     time.Duration         `json:"latency"`
-	Jitter      time.Duration         `json:"jitter"`
-	Loss        float64               `json:"loss"`
-	Throughput  float64               `json:"throughput_mbps"`
-	SLAStatus   string                `json:"sla_status"` // "OPTIMAL", "WARNING", "VIOLATED"
-	Samples     []time.Duration       `json:"samples"`
+	Source      OfficeLocation  `json:"source"`
+	Destination OfficeLocation  `json:"destination"`
+	Latency     time.Duration   `json:"latency"`
+	Jitter      time.Duration   `json:"jitter"`
+	Loss        float64         `json:"loss"`
+	Throughput  float64         `json:"throughput_mbps"`
+	SLAStatus   string          `json:"sla_status"` // "OPTIMAL", "WARNING", "VIOLATED"
+	Samples     []time.Duration `json:"samples"`
 }
 
 // DefaultLocations provides standard enterprise remote offices and data centers.
@@ -51,7 +51,7 @@ func RunPerformanceMatrix(ctx context.Context, locations []OfficeLocation, probe
 
 	totalPairs := len(locations) * len(locations)
 	results := make([]MatrixResult, totalPairs)
-	
+
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 4) // max 4 concurrent pairs
 
@@ -74,11 +74,20 @@ func RunPerformanceMatrix(ctx context.Context, locations []OfficeLocation, probe
 				continue
 			}
 
-			sem <- struct{}{}
+			// Context-aware semaphore acquisition prevents hanging on cancellation
+			select {
+			case <-ctx.Done():
+				return results[:idx]
+			case sem <- struct{}{}:
+			}
+
 			wg.Add(1)
 			go func(index int, s, d OfficeLocation) {
 				defer func() { <-sem }()
 				defer wg.Done()
+
+				// Goroutine-local RNG eliminates global mutex contention
+				rng := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 
 				samples := make([]time.Duration, 0, probesPerPair)
 				var totalLat time.Duration
@@ -99,12 +108,12 @@ func RunPerformanceMatrix(ctx context.Context, locations []OfficeLocation, probe
 					}
 
 					// Simulate packet loss
-					if rand.Float64()*100.0 < lossRate {
+					if rng.Float64()*100.0 < lossRate {
 						lostCount++
 						continue
 					}
 
-					jitterOffset := time.Duration(rand.Intn(jittMax)) * time.Millisecond
+					jitterOffset := time.Duration(rng.Intn(jittMax)) * time.Millisecond
 					sample := base + jitterOffset
 					samples = append(samples, sample)
 					totalLat += sample

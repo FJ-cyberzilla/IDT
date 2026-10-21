@@ -26,10 +26,10 @@ const (
 )
 
 type ProtocolTestConfig struct {
-	Protocol    ProtocolType     `json:"protocol"`
-	TargetName  string           `json:"target_name"`
-	Condition   NetworkCondition `json:"condition"`
-	Iterations  int              `json:"iterations"`
+	Protocol   ProtocolType     `json:"protocol"`
+	TargetName string           `json:"target_name"`
+	Condition  NetworkCondition `json:"condition"`
+	Iterations int              `json:"iterations"`
 }
 
 type ProtocolTestResult struct {
@@ -38,7 +38,7 @@ type ProtocolTestResult struct {
 	AvgLatency  time.Duration      `json:"avg_latency"`
 	Jitter      time.Duration      `json:"jitter"`
 	PacketLoss  float64            `json:"packet_loss"`
-	Score       int                `json:"score"` // 0 - 100 health score
+	Score       int                `json:"score"`  // 0 - 100 health score
 	Status      string             `json:"status"` // "HEALTHY", "DEGRADED", "CRITICAL"
 	Details     string             `json:"details"`
 }
@@ -61,11 +61,19 @@ func RunProtocolTests(ctx context.Context, configs []ProtocolTestConfig) []Proto
 	sem := make(chan struct{}, 3)
 
 	for i, cfg := range configs {
-		sem <- struct{}{}
+		select {
+		case <-ctx.Done():
+			return results
+		case sem <- struct{}{}:
+		}
+
 		wg.Add(1)
 		go func(idx int, c ProtocolTestConfig) {
 			defer func() { <-sem }()
 			defer wg.Done()
+
+			// Goroutine-local RNG prevents global mutex contention
+			rng := rand.New(rand.NewSource(time.Now().UnixNano() + int64(idx)))
 
 			iterations := c.Iterations
 			if iterations <= 0 {
@@ -73,40 +81,44 @@ func RunProtocolTests(ctx context.Context, configs []ProtocolTestConfig) []Proto
 			}
 
 			var baseLat time.Duration
-			var lossProb float64
+			var lossProb float64 // Stored as percentage (0.0 - 100.0)
 			var jitRange int
 
 			switch c.Protocol {
 			case ProtoHTTP:
 				baseLat = 35 * time.Millisecond
-				lossProb = 0.2
+				lossProb = 5.0
 				jitRange = 5
 			case ProtoVoIP:
 				baseLat = 20 * time.Millisecond // VoIP requires ultra-low latency
-				lossProb = 0.5
+				lossProb = 10.0
 				jitRange = 15
 			case ProtoSaaS:
 				baseLat = 65 * time.Millisecond
-				lossProb = 0.1
+				lossProb = 3.0
 				jitRange = 8
 			case ProtoCustom:
 				baseLat = 50 * time.Millisecond
-				lossProb = 1.0
+				lossProb = 15.0
 				jitRange = 20
 			}
 
-			// Adjust based on condition
+			// Adjust parameters based on network condition
 			switch c.Condition {
 			case ConditionCongested:
 				baseLat = time.Duration(float64(baseLat) * 2.5)
-				lossProb *= 3.0
+				lossProb *= 2.5
 				jitRange *= 2
 			case ConditionJittery:
-				jitRange = int(float64(jitRange) * 1.5)
+				jitRange = int(float64(jitRange) * 1.8)
 				lossProb *= 1.5
 			case ConditionDegraded:
-				lossProb *= 5.0
+				lossProb *= 4.0
 				baseLat = time.Duration(float64(baseLat) * 1.8)
+			}
+
+			if lossProb > 100.0 {
+				lossProb = 100.0
 			}
 
 			successCount := 0
@@ -120,11 +132,11 @@ func RunProtocolTests(ctx context.Context, configs []ProtocolTestConfig) []Proto
 				default:
 				}
 
-				if rand.Float64()*100.0 < lossProb {
+				if rng.Float64()*100.0 < lossProb {
 					continue // dropped packet
 				}
 
-				jitterVal := time.Duration(rand.Intn(jitRange+1)) * time.Millisecond
+				jitterVal := time.Duration(rng.Intn(jitRange+1)) * time.Millisecond
 				lat := baseLat + jitterVal
 				successCount++
 				totalLat += lat

@@ -18,6 +18,8 @@ coverage.*
 !coverage.go
 *.coverprofile
 profile.cov
+.testcoverage.yml
+coverage.out
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

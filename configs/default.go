@@ -56,14 +56,6 @@ func DefaultMasterConfig() MasterConfig {
 		},
 		Dialers: []NetworkDialer{
 			{
-				Name: "Cloudflare", Protocol: "DoH", Address: "https://cloudflare-dns.com/dns-query",
-				PrivacyScore: 4, Jurisdiction: "US", ZeroLogs: true, MalwareBlock: false,
-			},
-			{
-				Name: "Cloudflare", Protocol: "DoT", Address: "one.one.one.one:853",
-				PrivacyScore: 4, Jurisdiction: "US", ZeroLogs: true, MalwareBlock: false,
-			},
-			{
 				Name: "Quad9", Protocol: "DoH", Address: "https://dns.quad9.net/dns-query",
 				PrivacyScore: 5, Jurisdiction: "CH", ZeroLogs: true, MalwareBlock: true,
 			},
@@ -84,8 +76,16 @@ func DefaultMasterConfig() MasterConfig {
 				PrivacyScore: 4, Jurisdiction: "CY", ZeroLogs: true, MalwareBlock: true,
 			},
 			{
+				Name: "AdGuard", Protocol: "DoT", Address: "dns.adguard-dns.com:853",
+				PrivacyScore: 4, Jurisdiction: "CY", ZeroLogs: true, MalwareBlock: true,
+			},
+			{
 				Name: "CIRA", Protocol: "DoH", Address: "https://protected.canadianshield.cira.ca/dns-query",
 				PrivacyScore: 5, Jurisdiction: "CA", ZeroLogs: true, MalwareBlock: true,
+			},
+			{
+				Name: "CleanBrowsing", Protocol: "DoH", Address: "https://doh.cleanbrowsing.org/doh/family-filter/",
+				PrivacyScore: 5, Jurisdiction: "US", ZeroLogs: true, MalwareBlock: true,
 			},
 		},
 	}
