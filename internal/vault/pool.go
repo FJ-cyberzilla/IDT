@@ -17,6 +17,7 @@ type LivePool struct {
 	mu              sync.RWMutex
 	liveDialers     []config.Dialer
 	fallbacks       []config.Dialer
+	failCounts      map[string]int
 	logger          Logger
 	datalistDir     string
 	probeTimeout    time.Duration
@@ -119,6 +120,7 @@ func (p *LivePool) Warmup(ctx context.Context) error {
 
 	p.mu.Lock()
 	p.liveDialers = liveAfterProbe
+	p.failCounts = make(map[string]int)
 	p.lastRefresh = time.Now()
 	p.mu.Unlock()
 
@@ -202,10 +204,33 @@ func (p *LivePool) Query(ctx context.Context, target string) (dialer.Answer, str
 	if err != nil {
 		outcome = "error"
 		errStr = err.Error()
+
+		p.mu.Lock()
+		if p.failCounts == nil {
+			p.failCounts = make(map[string]int)
+		}
+		p.failCounts[d.Address]++
+		if p.failCounts[d.Address] >= 2 {
+			// Quarantine/remove dead resolver from liveDialers
+			var filtered []config.Dialer
+			for _, dialer := range p.liveDialers {
+				if dialer.Address != d.Address {
+					filtered = append(filtered, dialer)
+				}
+			}
+			p.liveDialers = filtered
+			log.Printf("🛡️ QUARANTINE: Resolver %s (%s) removed due to consecutive runtime errors", d.Name, d.Address)
+		}
+		p.mu.Unlock()
 	} else {
 		for _, ip := range ans.IPs {
 			ipStrs = append(ipStrs, ip.String())
 		}
+		p.mu.Lock()
+		if p.failCounts != nil {
+			delete(p.failCounts, d.Address)
+		}
+		p.mu.Unlock()
 	}
 
 	p.logger.LogTest(d.Name, target, "vault", outcome, ipStrs, nil, rtt, errStr)
