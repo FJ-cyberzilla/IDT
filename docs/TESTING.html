@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IDT Testing Guide &amp; Methodology — IDT</title>
+<meta name="theme-color" content="#1A1B26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="bg-effects">
+  <div class="glow-orb cyan"></div>
+  <div class="glow-orb green"></div>
+  <div class="grid-pattern"></div>
+</div>
+<header class="doc-header">
+  <a href="../index.html" class="logo-badge">IDT</a>
+  <a href="../index.html" class="back-link">← Back to home</a>
+</header>
+<main class="doc-main">
+<article class="md-content">
+<h1 id="idt-testing-guide-methodology">IDT Testing Guide &amp; Methodology</h1>
+<p>Welcome to the official <strong>IDT</strong> (Intelligent Diagnostic Toolkit) testing documentation. This guide outlines our testing philosophy, suite architecture, execution commands, and guidelines for maintaining our 100% test pass rate across all packages.</p>
+<hr>
+<h2 id="1-testing-philosophy">1. Testing Philosophy</h2>
+<p>IDT is an enterprise-grade diagnostic engine and interactive terminal application. Reliability, performance, and memory safety are paramount. Our testing standards require:</p>
+<ul><li><strong>100% Package Test Pass Rate</strong>: Zero regressions tolerated across all 15 core Go packages.</li><li><strong>Unit &amp; Integration Coverage</strong>: Core modules (<code>dialer</code>, <code>vault</code>, <code>runner</code>, <code>enterprise</code>, <code>ui</code>, <code>check</code>) must include robust unit tests and race-condition validation.</li><li><strong>TUI &amp; Visual Validation</strong>: Terminal user interface components, responsive mobile adaptations, and theme renderers are tested via deterministic unit tests in <code>internal/ui/ui_test.go</code>.</li></ul>
+<hr>
+<h2 id="2-test-execution-commands">2. Test Execution Commands</h2>
+<h3 id="running-all-tests">Running All Tests</h3>
+<p>To execute the entire test suite across all packages (disabling test caching to ensure fresh verification):</p>
+<pre><code class="language-bash">go test -count=1 ./...</code></pre>
+<h3 id="running-tests-with-race-detection">Running Tests with Race Detection</h3>
+<p>To run tests with the Go race detector enabled (recommended for concurrency-heavy components like <code>dialer</code>, <code>runner</code>, and <code>enterprise</code>):</p>
+<pre><code class="language-bash">go test -race -count=1 ./...</code></pre>
+<h3 id="running-tests-for-a-specific-package">Running Tests for a Specific Package</h3>
+<p>To focus on a specific package (e.g., the UI rendering package or enterprise simulation suite):</p>
+<pre><code class="language-bash">go test -v -count=1 ./internal/ui
+go test -v -count=1 ./internal/enterprise
+go test -v -count=1 ./internal/vault</code></pre>
+<hr>
+<h2 id="3-package-test-breakdown">3. Package Test Breakdown</h2>
+<table><thead><tr><th>Package Path</th><th>Description</th><th>Key Test Focus Areas</th></tr></thead><tbody><tr><td><code>idt/internal/check</code></td><td>Diagnostic check engine</td><td>Protocol connectivity, timeout handling</td></tr><tr><td><code>idt/internal/compare</code></td><td>Multi-target latency/metric comparison</td><td>Sorting, metric delta calculations</td></tr><tr><td><code>idt/internal/config</code></td><td>Configuration and policy loader</td><td>JSON parsing, policy validation</td></tr><tr><td><code>idt/internal/dialer</code></td><td>Multi-protocol network dialer (DoH, DoT, Standard)</td><td>Connection establishment, fallback resolution</td></tr><tr><td><code>idt/internal/enterprise</code></td><td>Enterprise simulation suite (Matrix, Protocols, Replay)</td><td>High-throughput stress tests, replay buffering</td></tr><tr><td><code>idt/internal/errorhandling</code></td><td>Fallback and error resolution engine</td><td>Error classification, retry backoff</td></tr><tr><td><code>idt/internal/runner</code></td><td>Diagnostic execution orchestrator</td><td>Concurrency bounding, cancellation handling</td></tr><tr><td><code>idt/internal/stats</code></td><td>Statistical aggregation engine</td><td>Mean, median, standard deviation accuracy</td></tr><tr><td><code>idt/internal/ui</code></td><td>Charmbracelet Bubble Tea TUI &amp; visual renderers</td><td>View rendering, responsive padding, navigation states</td></tr><tr><td><code>idt/internal/vault</code></td><td>Encrypted credential vault &amp; PBKDF2 crypto</td><td>Encryption/decryption roundtrips, key derivation</td></tr></tbody></table>
+<hr>
+<h2 id="4-writing-new-tests">4. Writing New Tests</h2>
+<p>When contributing new features or bug fixes, you <strong>must</strong> include corresponding unit tests:</p>
+<ol><li><strong>Naming Convention</strong>: Test files must be named <code>*_test.go</code> and reside in the same package as the code under test.</li><li><strong>Table-Driven Tests</strong>: Prefer idiomatic Go table-driven tests (<code>tests := []struct{...}</code>) to validate multiple input combinations cleanly.</li><li><strong>Assertions</strong>: Use standard library <code>t.Errorf</code>, <code>t.Fatalf</code>, or <code>t.Logf</code> with clear diagnostic messages.</li><li><strong>Cleanup</strong>: Always clean up temporary files or network listeners using <code>t.Cleanup()</code> or <code>defer</code>.</li></ol>
+<hr>
+<h2 id="5-continuous-integration-ci">5. Continuous Integration (CI)</h2>
+<p>Our GitHub Actions workflow (<code>.github/workflows/go.yml</code>) automatically executes:</p>
+<ul><li>Dependency vetting and module download.</li><li>Static analysis and compilation across multiple Go versions.</li><li>Full test suite execution (<code>go test -count=1 ./...</code>) with strict permission boundaries.</li></ul>
+</article>
+</main>
+<footer class="doc-footer">
+  IDT — Intelligent DNS Tool · Created by FJ™ Cybertronic Systems
+</footer>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test Coverage Policy &amp; Architecture — IDT</title>
+<meta name="theme-color" content="#1A1B26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="bg-effects">
+  <div class="glow-orb cyan"></div>
+  <div class="glow-orb green"></div>
+  <div class="grid-pattern"></div>
+</div>
+<header class="doc-header">
+  <a href="../index.html" class="logo-badge">IDT</a>
+  <a href="../index.html" class="back-link">← Back to home</a>
+</header>
+<main class="doc-main">
+<article class="md-content">
+<h1 id="test-coverage-policy-architecture">Test Coverage Policy &amp; Architecture</h1>
+<h2 id="objective">Objective</h2>
+<p>To ensure robust reliability, correctness, and regression prevention across the IDT codebase, we target a meaningful statement coverage of ~75–80%. Coverage is treated as a diagnostic metric to guide test writing, not as a vanity score.</p>
+<h2 id="excluded-files-and-rationale">Excluded Files and Rationale</h2>
+<p>Certain parts of the codebase interact directly with operating system network primitives or static presentation constants where unit testing adds no meaningful signal or is infeasible in CI isolation:</p>
+<ol><li><strong><code>main.go</code> (Entrypoint):</strong> Only wires command execution (<code>cmd.Execute()</code>). Tested via CLI integration tests rather than unit testing <code>main()</code>.</li><li><strong><code>internal/dialer/standard.go</code>:</strong> Performs raw production network dialing (<code>net.Dial</code>) against live destinations. Tested via integration tests and fakes elsewhere.</li><li><strong><code>internal/ui/theme.go</code> &amp; <code>internal/ui/color.go</code>:</strong> Pure static styling constants and ansi color code helpers.</li></ol>
+<h2 id="per-package-thresholds">Per-Package Thresholds</h2>
+<table><thead><tr><th>Package</th><th>Minimum Threshold</th></tr></thead><tbody><tr><td><code>configs</code></td><td>100%</td></tr><tr><td><code>vault</code></td><td>80%</td></tr><tr><td><code>dialer</code></td><td>70%</td></tr><tr><td><code>errorhandling</code></td><td>80%</td></tr><tr><td><code>enterprise</code></td><td>80%</td></tr><tr><td><code>compare</code></td><td>80%</td></tr><tr><td><code>helper</code></td><td>80%</td></tr><tr><td><code>stats</code></td><td>80%</td></tr><tr><td><code>config</code></td><td>80%</td></tr><tr><td><code>runner</code></td><td>70%</td></tr><tr><td><code>output</code></td><td>70%</td></tr><tr><td><code>tune</code></td><td>70%</td></tr><tr><td><code>check</code></td><td>60%</td></tr><tr><td><code>cmd</code></td><td>60%</td></tr><tr><td><code>ui</code></td><td>60%</td></tr></tbody></table>
+<h2 id="enforcing-quality">Enforcing Quality</h2>
+<ul><li>All PRs are gated by automated test execution and coverage verification via <code>go-test-coverage</code>.</li><li>The <code>-race</code> flag is mandatory for concurrent tests and data structure validation.</li></ul>
+</article>
+</main>
+<footer class="doc-footer">
+  IDT — Intelligent DNS Tool · Created by FJ™ Cybertronic Systems
+</footer>
+</body>
+</html>

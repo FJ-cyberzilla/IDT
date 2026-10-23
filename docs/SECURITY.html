@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Security Policy &amp; Zero-Logging Guarantee — IDT</title>
+<meta name="theme-color" content="#1A1B26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="bg-effects">
+  <div class="glow-orb cyan"></div>
+  <div class="glow-orb green"></div>
+  <div class="grid-pattern"></div>
+</div>
+<header class="doc-header">
+  <a href="../index.html" class="logo-badge">IDT</a>
+  <a href="../index.html" class="back-link">← Back to home</a>
+</header>
+<main class="doc-main">
+<article class="md-content">
+<h1 id="security-policy-zero-logging-guarantee">Security Policy &amp; Zero-Logging Guarantee</h1>
+<h2 id="1-overview">1. Overview</h2>
+<p>IDT (Intelligent DNS Tool) is designed from the ground up with a strict commitment to user privacy, cryptographic integrity, secure transport protocols, and zero telemetry collection.</p>
+<h2 id="2-zero-logging-telemetry-policy">2. Zero-Logging &amp; Telemetry Policy</h2>
+<ul><li><strong>No Telemetry</strong>: IDT does not collect, log, transmit, or store any user queries, IP addresses, diagnostic metrics, or session data.</li><li><strong>Local Execution</strong>: All benchmarking, DNS lookups, and statistical computations execute entirely locally on the operator's machine/device.</li><li><strong>Non-Invasive Operation</strong>: IDT never modifies, overrides, or affects Android, Termux, or system-wide DNS or network settings during tests, analysis, or execution.</li><li><strong>No External Callbacks</strong>: IDT contains no analytics trackers, crash reporters, or external telemetry hooks.</li></ul>
+<h2 id="3-cryptographic-standards-transport-security">3. Cryptographic Standards &amp; Transport Security</h2>
+<ul><li><strong>TLS 1.3 Enforcement</strong>: All DNS-over-HTTPS (DoH) and DNS-over-TLS (DoT) connections enforce strict TLS 1.3 or TLS 1.2 minimum standards with modern cipher suites.</li><li><strong>Certificate Validation</strong>: System root certificate stores are strictly validated during TLS handshakes. IDT never disables certificate verification (<code>InsecureSkipVerify</code> is strictly prohibited).</li><li><strong>DNSSEC Validation</strong>: Response integrity is validated through DNSSEC verification pipelines where supported by the resolver.</li></ul>
+<h2 id="4-network-safety-connection-pooling">4. Network Safety &amp; Connection Pooling</h2>
+<ul><li><strong>Connection Reuse</strong>: IDT utilizes optimized connection pooling (<code>GetSharedTransport</code>) with HTTP/2 keep-alives and idle timeout bounds to prevent socket exhaustion and port leakage.</li><li><strong>Private IP Protection</strong>: Built-in IP validation routines (<code>IsPrivateIP</code>) prevent unintended routing anomalies across RFC 1918 and RFC 3927 address spaces.</li></ul>
+<h2 id="5-vulnerability-reporting">5. Vulnerability Reporting</h2>
+<p>If you discover a security vulnerability within IDT, please report it responsibly by opening a private security advisory or contacting the maintainers directly. Do not disclose security vulnerabilities publicly until a patch has been released.</p>
+</article>
+</main>
+<footer class="doc-footer">
+  IDT — Intelligent DNS Tool · Created by FJ™ Cybertronic Systems
+</footer>
+</body>
+</html>

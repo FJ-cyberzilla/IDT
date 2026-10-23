@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IDT (Intelligent DNS Tool) - Comprehensive Architecture &amp; Technical Specification — IDT</title>
+<meta name="theme-color" content="#1A1B26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="bg-effects">
+  <div class="glow-orb cyan"></div>
+  <div class="glow-orb green"></div>
+  <div class="grid-pattern"></div>
+</div>
+<header class="doc-header">
+  <a href="../index.html" class="logo-badge">IDT</a>
+  <a href="../index.html" class="back-link">← Back to home</a>
+</header>
+<main class="doc-main">
+<article class="md-content">
+<h1 id="idt-intelligent-dns-tool-comprehensive-architecture-technical-specification">IDT (Intelligent DNS Tool) - Comprehensive Architecture &amp; Technical Specification</h1>
+<h2 id="1-executive-summary">1. Executive Summary</h2>
+<p><strong>IDT (Intelligent DNS Tool)</strong> is a professional, high-performance, enterprise-grade DNS benchmarking, diagnostics, tuning, and monitoring suite written in Go. It combines a robust headless CLI engine powered by <strong>Cobra</strong> with an interactive real-time terminal user interface (TUI) powered by <strong>Bubble Tea</strong> and <strong>Lip Gloss</strong>.</p>
+<p>IDT is engineered for low-latency network telemetry, strict privacy compliance, multi-protocol DNS resolution (DoH, DoT, Standard UDP/TCP), connection pooling optimization, pre-flight offline detection, advanced error resolution, and secure dynamic resolver pooling via the Vault instrumentation pipeline. IDT operates entirely locally and non-invasively; it never modifies, overrides, or affects Android, Termux, or system-wide DNS or network settings during tests, analysis, or execution.</p>
+<hr>
+<h2 id="2-architecture-project-layout">2. Architecture &amp; Project Layout</h2>
+<p>IDT adheres strictly to standard Go project layout conventions (<code>cmd/</code>, <code>internal/</code>, <code>configs/</code>, <code>docs/</code>), emphasizing clear separation of concerns, high modularity, zero circular dependencies, and complete test isolation.</p>
+<pre><code>/data/data/com.termux/files/home/IDT/
+├── main.go                      # Single integrated entry point (delegates to Cobra root)
+├── go.mod / go.sum              # Go module dependencies (Cobra, Lip Gloss, Bubble Tea)
+├── datalist/                    # Seed CSV candidate resolver datasets by country (gitignored)
+├── configs/
+│   ├── default.go               # Production default master configuration module
+│   └── default_test.go          # Unit tests for default configuration &amp; JSON serialization
+├── internal/
+│   ├── check/                   # Health checking &amp; policy compliance engine
+│   ├── cmd/                     # Cobra root command center &amp; TUI launcher
+│   ├── compare/                 # Side-by-side DNS provider benchmarking &amp; diffing
+│   ├── config/                  # Configuration loader, servers catalog, &amp; security policies
+│   ├── dialer/                  # Multi-protocol DNS dialer stack (DoH, DoT, Standard, Wire, Parser)
+│   ├── errorhandling/           # Granular error classification, fallback strategy, &amp; remediation engine
+│   ├── helper/                  # Advanced concurrency, connection pooling, retry &amp; IP utilities
+│   ├── output/                  # Formatted terminal output &amp; ASCII table renderers
+│   ├── runner/                  # Concurrent benchmark execution engine
+│   ├── stats/                   # Statistical aggregation (percentiles, mean, stddev)
+│   ├── tune/                    # Automated performance tuning &amp; recommendation engine
+│   ├── enterprise/              # Advanced enterprise simulation: office matrix, multi-protocol testing, &amp; traffic replay
+│   ├── ui/                      # Bubble Tea TUI state machine, Lip Gloss theme, &amp; visual renderers
+│   └── vault/                   # Vault package: candidate source loading, warm-up probing, oracle baselining, live pool, &amp; JSONL instrumentation
+└── docs/
+    ├── DOCUMENTATION.md         # Full architectural &amp; technical specification
+    └── index.html               # Project documentation web portal</code></pre>
+<hr>
+<h2 id="3-core-entry-point-cli-command-center-main-go-internal-cmd">3. Core Entry Point &amp; CLI Command Center (<code>main.go</code>, <code>internal/cmd/</code>)</h2>
+<h3 id="3-1-entry-point-main-go">3.1 Entry Point (<code>main.go</code>)</h3>
+<p>The root <code>main.go</code> acts as a thin wrapper ensuring clean bootstrap and panic recovery, immediately delegating execution to the Cobra command center:</p>
+<pre><code class="language-go">package main
+
+import (
+    "os"
+    "github.com/your-org/idt/internal/cmd"
+)
+
+func main() {
+    if err := cmd.Execute(); err != nil {
+        os.Exit(1)
+    }
+}</code></pre>
+<h3 id="3-2-cobra-command-structure-internal-cmd-root-go">3.2 Cobra Command Structure (<code>internal/cmd/root.go</code>)</h3>
+<p>The Cobra root command coordinates all CLI flags and subcommands:</p>
+<ul><li><strong>Global Flags</strong>:</li><li><code>--config</code>, <code>-c</code>: Path to custom JSON configuration file.</li><li><code>--timeout</code>, <code>-t</code>: Request timeout duration (default: 5s).</li><li><code>--concurrency</code>: Number of concurrent benchmark workers (default: 10).</li><li><code>--json</code>: Output results in structured JSON format for automation/CI pipelines.</li><li><code>--servers</code>: Custom list of DNS servers to query.</li><li><strong>Subcommands / Modes</strong>:</li><li>Default execution launches the interactive <strong>Bubble Tea TUI Dashboard</strong>.</li><li>Headless benchmark, check, tune, and compare modes for headless automation.</li></ul>
+<hr>
+<h2 id="4-interactive-tui-visual-rendering-engine-internal-ui">4. Interactive TUI &amp; Visual Rendering Engine (<code>internal/ui/</code>)</h2>
+<p>IDT features a state-of-the-art terminal UI designed with <strong>Lip Gloss</strong> and <strong>Bubble Tea</strong>, providing a modern, responsive, and aesthetically striking experience.</p>
+<h3 id="4-1-theme-design-system-internal-ui-theme-go">4.1 Theme &amp; Design System (<code>internal/ui/theme.go</code>)</h3>
+<ul><li><strong>Color Palette</strong>:</li><li><em>Midnight Blue</em> (<code>#1A1B26</code>) - Base background and card fills.</li><li><em>Neon Cyan</em> (<code>#7DCFFF</code>) - Primary accent and active highlights.</li><li><em>Emerald Green</em> (<code>#9ECE6A</code>) - Success indicators and optimal latency.</li><li><em>Amber Gold</em> (<code>#E0AF68</code>) - Warning states and moderate performance.</li><li><em>Crimson Red</em> (<code>#F7768E</code>) - Error alerts and offline warnings.</li><li><em>Slate Gray</em> (<code>#565F89</code>) - Muted borders and secondary text.</li><li><strong>Styling</strong>: Rounded borders, adaptive padding, bold headers, and responsive margins that fit any terminal width (gracefully collapsing below 80 columns).</li></ul>
+<h3 id="4-2-interactive-state-machine-internal-ui-dashboard-go">4.2 Interactive State Machine (<code>internal/ui/dashboard.go</code>)</h3>
+<ul><li><strong>Bubble Tea Model</strong>: Manages application state including active view tab (<code>Benchmark</code>, <code>Check</code>, <code>Tune</code>, <code>Compare</code>, <code>Settings</code>), warm-up progress, spinner ticks, and keyboard inputs (<code>Tab</code>, <code>j</code>/<code>k</code>, <code>Up</code>/<code>Down</code>, <code>q</code>, <code>Ctrl+C</code>).</li><li><strong>Animated Multi-Stage Warm-Up Phase</strong>:</li><li>Stage 1: Network Interface &amp; Gateway Discovery.</li><li>Stage 2: VPN / ISP Telemetry Inspection.</li><li>Stage 3: Root Certificate &amp; Trust Store Verification.</li><li>Stage 4: Pre-flight DNS Resolution Reachability Test.</li><li>Each stage features real-time checkmarks (<code>[✔]</code>) and animated spinner frames.</li><li><strong>Self-Aware Offline Detection</strong>: Automatically detects network disconnection before execution, rendering a prominent Crimson Red Attention Card alerting the operator with fallback instructions.</li></ul>
+<h3 id="4-3-modular-view-renderers-internal-ui-visual-go">4.3 Modular View Renderers (<code>internal/ui/visual.go</code>)</h3>
+<ul><li><strong>Benchmark View</strong>: Real-time latency distribution graphs and server response tables.</li><li><strong>Check View</strong>: Policy compliance audits, security headers, and DNSSEC validation cards.</li><li><strong>Tune View</strong>: Automated bottleneck detection and latency optimization recommendations.</li><li><strong>Compare View</strong>: Side-by-side jitter and percentile comparison tables between primary and backup resolvers.</li><li><strong>Settings View</strong>: Active configuration parameters, timeout settings, and privacy scorecards.</li></ul>
+<hr>
+<h2 id="5-production-default-configuration-configs-default-go-internal-config">5. Production Default Configuration (<code>configs/default.go</code>, <code>internal/config/</code>)</h2>
+<h3 id="5-1-default-configuration-master-configs-default-go">5.1 Default Configuration Master (<code>configs/default.go</code>)</h3>
+<p>IDT includes a robust production-grade master configuration module that ships with optimized defaults:</p>
+<ul><li><strong>Application Parameters</strong>: Default timeout (3s), concurrency (10), retry count (2), buffer sizes.</li><li><strong>Curated Resolvers</strong>:</li><li><strong>Cloudflare DoH</strong>: <code>https://cloudflare-dns.com/dns-query</code> (Privacy Score: 9.8/10, Zero-Logging: Yes).</li><li><strong>Google DoH</strong>: <code>https://dns.google/dns-query</code> (Privacy Score: 8.5/10, Zero-Logging: Yes).</li><li><strong>Quad9 DoT</strong>: <code>tls://9.9.9.9:853</code> (Privacy Score: 9.9/10, Malware Blocking: Enabled).</li><li><strong>Cloudflare Standard</strong>: <code>1.1.1.1:53</code> (High reliability, UDP/TCP).</li><li><strong>Serialization</strong>: Full JSON serialization (<code>MarshalJSON</code>, <code>UnmarshalJSON</code>) and file persistence support.</li></ul>
+<hr>
+<h2 id="6-network-dialers-dns-transport-stack-internal-dialer">6. Network Dialers &amp; DNS Transport Stack (<code>internal/dialer/</code>)</h2>
+<p>IDT supports multiple enterprise DNS protocols with a unified abstraction layer (<code>dialer.go</code>):</p>
+<ul><li><strong>DNS-over-HTTPS (<code>doh.go</code>)</strong>: Implements RFC 8484 compliant POST/GET requests over TLS 1.3 with HTTP/2 multiplexing.</li><li><strong>DNS-over-TLS (<code>dot.go</code>)</strong>: Implements RFC 7858 secure TCP connections over port 853 with session resumption and SNI enforcement.</li><li><strong>Standard UDP/TCP (<code>standard.go</code>)</strong>: Traditional raw socket resolution with automatic fallback from UDP to TCP on truncation (<code>TC bit</code>).</li><li><strong>Wire Encoder/Decoder (<code>wire.go</code>, <code>parse.go</code>)</strong>: Binary DNS packet builder and response parser handling DNS header flags, RCODEs, question sections, and resource records (A, AAAA, CNAME, TXT) with strict bounds checking.</li></ul>
+<hr>
+<h2 id="7-diagnostics-benchmarking-analytics-internal-check-internal-runner-internal-tune-internal-compare-internal-stats">7. Diagnostics, Benchmarking &amp; Analytics (<code>internal/check</code>, <code>internal/runner</code>, <code>internal/tune</code>, <code>internal/compare</code>, <code>internal/stats</code>)</h2>
+<ul><li><strong>Runner (<code>runner.go</code>)</strong>: Executes concurrent query batches across multiple dialers with precise microsecond timing.</li><li><strong>Stats (<code>stats.go</code>)</strong>: Computes statistical aggregations including minimum, maximum, arithmetic mean, median, p95/p99 percentiles, and standard deviation.</li><li><strong>Check (<code>check.go</code>)</strong>: Validates resolver integrity, DNSSEC compliance, and response authenticity against known expected IPs.</li><li><strong>Tune (<code>tune.go</code>)</strong>: Analyzes benchmark results to recommend optimal dialer parameters, connection pool sizes, and timeout thresholds.</li><li><strong>Compare (<code>compare.go</code>)</strong>: Evaluates performance differentials between multiple DNS providers under identical load conditions.</li></ul>
+<hr>
+<h2 id="8-advanced-helpers-resilient-error-handling-internal-helper-internal-errorhandling">8. Advanced Helpers &amp; Resilient Error Handling (<code>internal/helper</code>, <code>internal/errorhandling</code>)</h2>
+<h3 id="8-1-advanced-helpers-internal-helper-advance-helper-go">8.1 Advanced Helpers (<code>internal/helper/advance_helper.go</code>)</h3>
+<ul><li><strong><code>SafeRun</code> &amp; <code>SafeGo</code></strong>: Panic-recovering concurrency primitives preventing background goroutine crashes.</li><li><strong>Exponential Backoff with Jitter</strong>: Robust retry wrapper for transient network failures.</li><li><strong>Shared Transport Connection Pooling (<code>GetSharedTransport</code>)</strong>: Configures optimized <code>http.Transport</code> with HTTP/2 keep-alives, idle connection pooling, and dial timeouts.</li><li><strong>Private IP Detection (<code>IsPrivateIP</code>)</strong>: RFC 1918 and RFC 3927 range checking for network interface discovery.</li></ul>
+<h3 id="8-2-error-resolution-engine-internal-errorhandling-resolve-go">8.2 Error Resolution Engine (<code>internal/errorhandling/resolve.go</code>)</h3>
+<p>Classifies network and protocol errors into actionable categories (Timeout, Network Unreachable, TLS Handshake Failure, DNS SERVFAIL, Rate Limited) and provides precise remediation guidance for operators.</p>
+<h3 id="8-3-robust-lookup-fallback-strategy-internal-errorhandling-fallback-go">8.3 Robust Lookup &amp; Fallback Strategy (<code>internal/errorhandling/fallback.go</code>)</h3>
+<p>Specifically engineered to handle Android Private DNS and disconnected VPN stalls:</p>
+<ul><li><strong><code>IsAndroidPrivateDNSFailure</code></strong>: Detects system connection rejections (<code>ENETUNREACH</code>, <code>ECONNREFUSED</code>, dial timeouts) caused by Android enforcing Private DNS when the VPN tunnel is offline.</li><li><strong><code>RobustLookupWithFallback</code></strong>: Bypasses stalled system stub resolvers by executing direct low-level UDP/TCP bootstrap queries to public resolvers with strict timeout bounds (1.5s - 2s), preventing command stalls and ensuring graceful error recovery and dynamic status reporting.</li></ul>
+<h3 id="8-4-automated-system-dns-discovery-internal-config-system-dns-go">8.4 Automated System DNS Discovery (<code>internal/config/system_dns.go</code>)</h3>
+<ul><li>Automatically examines and tests whatever DNS is configured across operating systems non-conflictually:</li><li><strong>Windows PowerShell / <code>ipconfig</code></strong>: Parses active network adapter and client DNS server addresses via <code>ipconfig /all</code> and PowerShell (<code>Get-DnsClientServerAddress</code>).</li><li><strong>WSL 2</strong>: Inspects WSL guest resolver (<code>/etc/resolv.conf</code>) and queries Windows host DNS bridge/PowerShell seamlessly.</li><li><strong>Android &amp; Termux</strong>: Inspects system properties (<code>net.dns1</code>, <code>net.dns2</code>, private DNS specifiers) and Termux <code>/etc/resolv.conf</code>.</li><li><strong>DoH &amp; DoT</strong>: Detects encrypted transport endpoints configured in environment or system settings.</li></ul>
+<hr>
+<h2 id="9-vault-instrumentation-live-resolver-pool-internal-vault">9. Vault Instrumentation &amp; Live Resolver Pool (<code>internal/vault/</code>)</h2>
+<p>The <strong>Vault</strong> subsystem manages candidate resolver seeds, warm-up probing, baseline comparison oracles, live pool management, and append-only JSONL instrumentation.</p>
+<h3 id="9-1-jsonl-instrumentation-instrumentation-go">9.1 JSONL Instrumentation (<code>instrumentation.go</code>)</h3>
+<ul><li>Logs warm-up events, test events, and pool snapshots to a gitignored <code>runs/</code> directory as structured JSONL records.</li><li>Operates through the <code>Logger</code> interface to ensure zero coupling with storage layers.</li></ul>
+<h3 id="9-2-candidate-source-loader-crypto-candidates-go-crypto-go">9.2 Candidate Source Loader &amp; Crypto (<code>candidates.go</code>, <code>crypto.go</code>)</h3>
+<ul><li>Scans and parses country-specific encrypted seed files (<code>*.enc</code>) inside <code>datalist/</code>.</li><li>Uses <strong>AES-256-GCM</strong> authenticated encryption with SHA-256 derived keys to secure candidate resolver lists at rest.</li><li>Automatically decrypts encrypted seed files transparently at runtime during candidate loading.</li><li><strong>Fresh Clone &amp; Gitignore Handling</strong>: Because <code>datalist/</code> is gitignored to keep repository sizes lean, a fresh clone from GitHub without <code>datalist/</code> will not crash or fail; instead, the Vault pool gracefully falls back to IDT's robust built-in hardcoded fallback chain (Cloudflare, Google, Quad9). Users can optionally place their own encrypted or plain CSV seed lists in a local <code>datalist/</code> directory to enable custom regional pool seeding.</li></ul>
+<h3 id="9-3-live-pool-manager-pool-go">9.3 Live Pool Manager (<code>pool.go</code>)</h3>
+<ul><li><strong>Warm-Up Stage</strong>: Probes candidates strictly pinned over plain UDP port 53.</li><li><strong>Baseline Oracle</strong>: Compares results against an encrypted public oracle (Cloudflare DoH) to filter out intercepting or dead resolvers.</li><li><strong>Fallback Chain</strong>: Maintains hardcoded production fallbacks outside the CSV seed list.</li><li>Picker &amp; Background Refresh: Offers round-robin / weighted selection and 15-minute background timer refreshing with pool size alerts (&lt; 3).</li></ul>
+<hr>
+<h2 id="10-advanced-enterprise-protocol-simulation-suite-internal-enterprise">10. Advanced Enterprise &amp; Protocol Simulation Suite (<code>internal/enterprise/</code>)</h2>
+<p>IDT features a dedicated enterprise simulation engine designed by <strong>FJ™ Cybertronic Systems</strong> to validate application performance and stability across distributed environments before rollout:</p>
+<h3 id="10-1-remote-office-data-center-performance-matrix-matrix-go">10.1 Remote Office &amp; Data Center Performance Matrix (<code>matrix.go</code>)</h3>
+<ul><li>Concurrently simulates latency, jitter, packet loss, and throughput between distributed remote offices and data centers (New York, San Francisco, London, Frankfurt, Tokyo, Sydney).</li><li>Computes SLA status (<code>OPTIMAL</code>, <code>WARNING</code>, <code>VIOLATED</code>) based on thresholds and packet drop metrics.</li></ul>
+<h3 id="10-2-multi-protocol-dynamic-testing-protocols-go">10.2 Multi-Protocol Dynamic Testing (<code>protocols.go</code>)</h3>
+<ul><li>Probes a variety of protocols (<strong>HTTP/REST API</strong>, <strong>VoIP / SIP-RTP</strong>, <strong>SaaS / M365 / Salesforce</strong>, <strong>Custom App TCP/UDP</strong>) across dynamic network conditions (Normal/Optimal, High Congestion, Extreme Jitter, Packet Loss/Drop).</li><li>Calculates protocol health scores (0-100) and structured diagnostics.</li></ul>
+<h3 id="10-3-live-traffic-capture-lab-replay-simulator-replay-go">10.3 Live Traffic Capture &amp; Lab Replay Simulator (<code>replay.go</code>)</h3>
+<ul><li>Captures production traffic transactions and replays them in a controlled lab setting with speed multipliers (1.0x to 10.0x), jitter injection, and packet drop simulation.</li><li>Automatically flags anomalies and high-latency spikes to ensure safe deployment rollouts.</li></ul>
+<hr>
+<h2 id="11-testing-quality-assurance">11. Testing &amp; Quality Assurance</h2>
+<p>IDT maintains <strong>100% unit test coverage</strong> across all internal and top-level packages:</p>
+<ul><li><code>configs/default_test.go</code></li><li><code>internal/cmd/cmd_test.go</code></li><li><code>internal/ui/ui_test.go</code></li><li><code>internal/dialer/dialer_test.go</code></li><li><code>internal/config/config_test.go</code></li><li><code>internal/runner/runner_test.go</code></li><li><code>internal/check/check_test.go</code></li><li><code>internal/tune/tune_test.go</code></li><li><code>internal/output/output_test.go</code></li><li><code>internal/compare/compare_test.go</code></li><li><code>internal/stats/stats_test.go</code></li><li><code>internal/helper/helper_test.go</code></li><li><code>internal/errorhandling/resolve_test.go</code></li><li><code>internal/errorhandling/fallback_test.go</code></li><li><code>internal/vault/instrumentation_test.go</code></li><li><code>internal/vault/candidates_test.go</code></li><li><code>internal/vault/pool_test.go</code></li></ul>
+<p>Execution command:</p>
+<pre><code class="language-bash">go test -v ./...</code></pre>
+<hr>
+<h2 id="12-compilation-usage">12. Compilation &amp; Usage</h2>
+<h3 id="12-1-build-executable">12.1 Build Executable</h3>
+<pre><code class="language-bash">go build -o idt .</code></pre>
+<h3 id="12-2-run-interactive-dashboard">12.2 Run Interactive Dashboard</h3>
+<pre><code class="language-bash">./idt</code></pre>
+<h3 id="12-3-run-headless-benchmark">12.3 Run Headless Benchmark</h3>
+<pre><code class="language-bash">./idt --concurrency 20 --timeout 3s</code></pre>
+</article>
+</main>
+<footer class="doc-footer">
+  IDT — Intelligent DNS Tool · Created by FJ™ Cybertronic Systems
+</footer>
+</body>
+</html>

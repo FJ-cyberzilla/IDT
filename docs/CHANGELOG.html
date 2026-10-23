@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Changelog — IDT</title>
+<meta name="theme-color" content="#1A1B26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="bg-effects">
+  <div class="glow-orb cyan"></div>
+  <div class="glow-orb green"></div>
+  <div class="grid-pattern"></div>
+</div>
+<header class="doc-header">
+  <a href="../index.html" class="logo-badge">IDT</a>
+  <a href="../index.html" class="back-link">← Back to home</a>
+</header>
+<main class="doc-main">
+<article class="md-content">
+<h1 id="changelog">Changelog</h1>
+<p>All notable changes to the <strong>IDT</strong> (Intelligent Diagnostic Toolkit) CLI application and enterprise platform are documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.0.html">Semantic Versioning</a>.</p>
+<hr>
+<h2 id="unreleased-2026-10-19">[Unreleased] - 2026-10-19</h2>
+<h3 id="added">Added</h3>
+<ul><li><strong>FJ™ Cybertronic Systems Branding</strong>: Implemented vintage orange TrueColor exit branding (<code>#ff8700</code>) across command-line failure states and application exit banners.</li><li><strong>TUI About View &amp; Command Center Enhancements</strong>: Added an interactive About Us view detailing FJ™ Cybertronic Systems specifications, version metadata, support contacts (<code>cyberzilla.systsms@gmail.com</code>), and repository links.</li><li><strong>Advanced Enterprise Simulation Suite (<code>internal/enterprise</code>)</strong>:</li><li><code>matrix.go</code>: High-throughput enterprise topology simulation matrix.</li><li><code>protocols.go</code>: Advanced protocol negotiation and stress-testing protocols.</li><li><code>replay.go</code>: Session replay and diagnostic telemetry recorder.</li><li>Comprehensive unit tests (<code>enterprise_test.go</code>).</li><li><strong>Responsive Mobile Terminal Adaptation</strong>: Enhanced Bubble Tea TUI dashboard and visual renderers for seamless rendering on narrow/mobile terminal viewports (Termux, iOS/Android mobile terminals) with dynamic text truncation and padding.</li><li><strong>Robust Navigation &amp; Signal Safety</strong>: Implemented graceful handling and guards for <code>ESC</code>, <code>Ctrl+C</code>, and <code>Ctrl+Z</code> signals across all TUI states (<code>stateDashboard</code>, <code>stateAbout</code>, <code>stateEnterpriseMenu</code>).</li><li><strong>PBKDF2 Cryptographic Vault Security</strong>: Upgraded vault passphrase derivation to robust PBKDF2 hashing standards.</li><li><strong>GitHub Workflow Hardening</strong>: Restricted CI workflow token permissions for enhanced supply-chain security.</li></ul>
+<h3 id="changed">Changed</h3>
+<ul><li>Refactored <code>internal/ui/dashboard.go</code>, <code>internal/ui/visual.go</code>, and <code>internal/ui/theme.go</code> for modular separation of concerns.</li><li>Optimized concurrency bounding and slice pre-allocation across network dialers and runners.</li></ul>
+<h3 id="fixed">Fixed</h3>
+<ul><li>Unhandled terminal resize panics and layout overflow on narrow viewports.</li><li>Signal interception stability during long-running diagnostic runs.</li></ul>
+<hr>
+<h2 id="1-0-0-2026-10-15">[1.0.0] - 2026-10-15</h2>
+<h3 id="added">Added</h3>
+<ul><li>Initial release of IDT (Intelligent Diagnostic Toolkit).</li><li>Multi-protocol DNS &amp; network diagnostic engine (<code>check</code>, <code>compare</code>, <code>dialer</code>, <code>runner</code>).</li><li>Encrypted credential vault (<code>vault</code>).</li><li>Charmbracelet Bubble Tea interactive TUI dashboard.</li><li>Comprehensive test suite covering 15 Go packages.</li></ul>
+</article>
+</main>
+<footer class="doc-footer">
+  IDT — Intelligent DNS Tool · Created by FJ™ Cybertronic Systems
+</footer>
+</body>
+</html>
