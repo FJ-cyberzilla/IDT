@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>IDT — Intelligent DNS Tool & TUI Command Center</title>
 <meta name="description" content="Professional CLI command center and real-time interactive TUI dashboard for DNS benchmarking, diagnostics, tuning, and monitoring.">
 <meta name="author" content="IDT Engineering Team">
+<meta name="theme-color" content="#1A1B26">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,16 +26,16 @@
     --warn: #E0AF68;
     --danger: #F7768E;
     --border: #414868;
-    --border-active: #7DCFFF;
     --radius: 12px;
     --radius-sm: 6px;
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+    --pad-x: clamp(0.75rem, 3vw, 2rem);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 
   body {
     font-family: var(--font-sans);
@@ -45,332 +46,248 @@
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Background Glow & Grid */
+  /* Background effects */
   .bg-effects {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    overflow: hidden;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: -1;
+    overflow: hidden; pointer-events: none;
   }
-
   .glow-orb {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    filter: blur(140px);
-    opacity: 0.18;
+    position: absolute; width: 60vmin; height: 60vmin; border-radius: 50%;
+    filter: blur(120px); opacity: 0.18;
   }
-
-  .glow-orb.cyan {
-    top: -200px; left: -200px;
-    background: var(--accent);
-  }
-
-  .glow-orb.green {
-    bottom: -200px; right: -200px;
-    background: var(--success);
-  }
-
+  .glow-orb.cyan { top: -20vmin; left: -20vmin; background: var(--accent); }
+  .glow-orb.green { bottom: -20vmin; right: -20vmin; background: var(--success); }
   .grid-pattern {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background-image:
       linear-gradient(rgba(86, 95, 137, 0.08) 1px, transparent 1px),
       linear-gradient(90deg, rgba(86, 95, 137, 0.08) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
-  /* Header & Navigation */
+  /* Header */
   header {
     background: rgba(22, 22, 30, 0.9);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    position: sticky; top: 0; z-index: 100;
+    padding: 0.9rem var(--pad-x);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 0.75rem;
   }
-
   .logo-area {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    min-width: 0;
   }
-
   .logo-badge {
     background: var(--bg-elevated);
     border: 1px solid var(--accent);
     color: var(--accent);
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 0.9rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-weight: 700; font-size: 0.85rem;
+    padding: 0.25rem 0.55rem; border-radius: var(--radius-sm);
     box-shadow: 0 0 15px var(--accent-glow);
+    flex-shrink: 0;
   }
-
   .logo-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--fg-bright);
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    font-weight: 700; color: var(--fg-bright);
     letter-spacing: -0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-
   .nav-links {
-    display: flex;
-    gap: 1.25rem;
-    list-style: none;
-    align-items: center;
-    flex-wrap: wrap;
+    display: flex; gap: 0.5rem 1.1rem; list-style: none;
+    align-items: center; flex-wrap: wrap;
   }
-
   .nav-links a {
-    color: var(--fg);
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
+    color: var(--fg); text-decoration: none;
+    font-size: 0.9rem; font-weight: 500;
     transition: color 0.2s;
+    padding: 0.25rem 0;
+    display: inline-block;
   }
-
-  .nav-links a:hover {
-    color: var(--accent);
-  }
-
+  .nav-links a:hover { color: var(--accent); }
   .btn-terminal {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     color: var(--accent);
     padding: 0.4rem 0.8rem;
     border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    font-family: var(--font-mono); font-size: 0.8rem;
     text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
-
   .btn-terminal:hover {
     border-color: var(--accent);
     background: rgba(125, 207, 255, 0.1);
   }
 
-  /* Main Container */
+  /* Main */
   main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2.5rem 1rem;
-    width: 100%;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+    max-width: 1200px; margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 2.5rem) var(--pad-x);
+    width: 100%; flex: 1;
+    display: flex; flex-direction: column;
+    gap: clamp(1.75rem, 4vw, 2.5rem);
+    min-width: 0;
   }
 
-  /* Hero Section */
+  /* Hero */
   .hero {
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    align-items: center;
+    display: flex; flex-direction: column;
+    gap: 1.1rem; align-items: center;
   }
-
   .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: inline-flex; align-items: center; gap: 0.5rem;
     background: rgba(158, 206, 106, 0.1);
     border: 1px solid var(--success);
     color: var(--success);
     padding: 0.35rem 0.85rem;
     border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.75rem; font-weight: 600;
     font-family: var(--font-mono);
+    text-align: center; flex-wrap: wrap; justify-content: center;
+    max-width: 100%;
   }
-
   .hero-tag .dot {
-    width: 8px;
-    height: 8px;
-    background: var(--success);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--success);
+    width: 8px; height: 8px; background: var(--success);
+    border-radius: 50%; box-shadow: 0 0 8px var(--success);
+    flex-shrink: 0;
   }
-
   .hero h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 800;
-    color: var(--fg-bright);
+    font-size: clamp(1.6rem, 6vw, 3rem);
+    font-weight: 800; color: var(--fg-bright);
     letter-spacing: -0.03em;
-    max-width: 800px;
-    line-height: 1.2;
+    max-width: 800px; line-height: 1.15;
+    overflow-wrap: break-word;
   }
-
-  .hero h1 span {
-    color: var(--accent);
-  }
-
+  .hero h1 span { color: var(--accent); }
   .hero p {
-    font-size: clamp(1rem, 2vw, 1.15rem);
-    color: var(--fg);
-    max-width: 700px;
-    font-weight: 400;
-    padding: 0 0.5rem;
+    font-size: clamp(0.9rem, 2.4vw, 1.15rem);
+    color: var(--fg); max-width: 700px; font-weight: 400;
   }
-
   .hero-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: flex; gap: 0.75rem; margin-top: 0.75rem;
+    flex-wrap: wrap; justify-content: center;
+    width: 100%;
   }
-
   .btn {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center; justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.35rem;
     border-radius: var(--radius-sm);
-    font-weight: 600;
-    font-size: 0.95rem;
-    text-decoration: none;
-    transition: all 0.2s;
+    font-weight: 600; font-size: 0.9rem;
+    text-decoration: none; transition: all 0.2s;
+    white-space: nowrap;
   }
-
   .btn-primary {
-    background: var(--accent);
-    color: var(--bg-base);
+    background: var(--accent); color: var(--bg-base);
     box-shadow: 0 0 20px var(--accent-glow);
   }
-
-  .btn-primary:hover {
-    background: #6cb9ff;
-    transform: translateY(-2px);
-  }
-
+  .btn-primary:hover { background: #6cb9ff; transform: translateY(-2px); }
   .btn-secondary {
     background: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--fg-bright);
   }
-
   .btn-secondary:hover {
     border-color: var(--accent);
     background: var(--bg-elevated);
   }
 
-  /* Interactive Tabs Section */
+  /* Tabs */
   .tabs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    display: flex; flex-direction: column;
+    gap: 1.25rem; min-width: 0;
   }
-
   .tabs-header {
-    display: flex;
-    gap: 0.5rem;
+    display: flex; gap: 0.5rem;
     background: var(--bg-card);
     padding: 0.5rem;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
-
+  .tabs-header::-webkit-scrollbar { height: 6px; }
+  .tabs-header::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 3px;
+  }
   .tab-btn {
-    background: transparent;
-    border: none;
+    background: transparent; border: none;
     color: var(--fg);
-    padding: 0.75rem 1.25rem;
+    padding: 0.65rem 1rem;
     border-radius: var(--radius-sm);
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    flex-shrink: 0;
+    font-weight: 600; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.2s;
+    white-space: nowrap; flex-shrink: 0;
+    font-family: inherit;
+    touch-action: manipulation;
   }
-
   .tab-btn:hover {
     color: var(--fg-bright);
     background: var(--bg-elevated);
   }
-
   .tab-btn.active {
     background: var(--bg-elevated);
     color: var(--accent);
     border: 1px solid var(--border);
   }
-
   .tab-content {
     display: none;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: clamp(1.25rem, 3vw, 2.5rem);
+    padding: clamp(1rem, 3vw, 2.25rem);
+    min-width: 0;
+  }
+  .tab-content.active {
+    display: flex; flex-direction: column; gap: 1.75rem;
     animation: fadeIn 0.3s ease;
   }
-
-  .tab-content.active {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Feature Grid Cards */
+  /* Feature cards */
   .feature-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 1rem;
   }
-
   .card {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    padding: 1.15rem;
+    display: flex; flex-direction: column; gap: 0.6rem;
     transition: border-color 0.2s, transform 0.2s;
+    min-width: 0;
+    overflow-wrap: break-word;
   }
-
   .card:hover {
     border-color: var(--accent);
     transform: translateY(-2px);
   }
-
-  .card-icon {
-    font-size: 1.5rem;
-  }
-
+  .card-icon { font-size: 1.4rem; }
   .card h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.05rem; font-weight: 700;
     color: var(--fg-bright);
   }
-
   .card p {
-    font-size: 0.9rem;
-    color: var(--fg);
+    font-size: 0.88rem; color: var(--fg);
+    overflow-wrap: break-word;
   }
 
-  /* Terminal Mockup */
+  /* Terminal */
   .terminal-box {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -378,147 +295,127 @@
     overflow: hidden;
     font-family: var(--font-mono);
     max-width: 100%;
+    min-width: 0;
   }
-
   .terminal-header {
     background: var(--bg-elevated);
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+    display: flex; align-items: center; gap: 0.5rem;
     border-bottom: 1px solid var(--border);
   }
-
-  .t-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-
+  .t-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .t-dot.red { background: var(--danger); }
   .t-dot.yellow { background: var(--warn); }
   .t-dot.green { background: var(--success); }
-
   .t-title {
     margin-left: 0.5rem;
-    font-size: 0.85rem;
-    color: var(--fg-muted);
+    font-size: 0.8rem; color: var(--fg-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-
   .terminal-body {
-    padding: 1.25rem;
-    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    padding: clamp(0.85rem, 3vw, 1.25rem);
+    font-size: clamp(0.72rem, 2.2vw, 0.9rem);
     color: var(--success);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    display: flex; flex-direction: column; gap: 0.45rem;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: pre;
   }
-
   .terminal-body .cmd { color: var(--accent); }
   .terminal-body .dim { color: var(--fg-muted); }
   .terminal-body .warn { color: var(--warn); }
+  .terminal-body .success { color: var(--success); }
 
-  /* Architecture & Stats table */
+  /* Specs */
   .spec-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     gap: 1rem;
   }
-
   .spec-item {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    padding: 1.25rem;
+    padding: 1.1rem;
     border-radius: var(--radius-sm);
+    min-width: 0;
+    overflow-wrap: break-word;
   }
-
   .spec-label {
-    font-size: 0.8rem;
-    color: var(--fg-muted);
+    font-size: 0.72rem; color: var(--fg-muted);
     font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .spec-value {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--fg-bright); margin-top: 0.25rem;
   }
 
-  .spec-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--fg-bright);
-    margin-top: 0.25rem;
+  /* Lists */
+  .module-list {
+    list-style: disc; padding-left: 1.25rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    overflow-wrap: break-word;
+  }
+  .module-list code {
+    font-family: var(--font-mono);
+    background: var(--bg-elevated);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    word-break: break-word;
   }
 
   /* Footer */
   footer {
     background: var(--bg-card);
     border-top: 1px solid var(--border);
-    padding: 2rem 1rem;
+    padding: 2rem var(--pad-x);
     text-align: center;
     font-size: 0.85rem;
     color: var(--fg-muted);
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: center;
+    display: flex; flex-direction: column;
+    gap: 0.6rem; align-items: center;
   }
-
-  footer a {
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  footer a:hover {
-    text-decoration: underline;
-  }
-
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
   .brand-signature {
-    color: #ff8700;
-    font-weight: 700;
+    color: #ff8700; font-weight: 700;
     font-family: var(--font-mono);
-    letter-spacing: 0.05em;
-    font-size: 0.9rem;
+    letter-spacing: 0.05em; font-size: 0.9rem;
   }
 
-  /* Responsive Adjustments */
+  /* Responsive */
   @media (max-width: 768px) {
-    header {
-      padding: 0.75rem 1rem;
-      justify-content: center;
-      text-align: center;
-    }
+    header { justify-content: center; text-align: center; }
+    .logo-area { justify-content: center; width: 100%; }
+    .nav-links { justify-content: center; width: 100%; }
+  }
+  @media (max-width: 420px) {
+    .hero-actions { flex-direction: column; }
+    .hero-actions .btn { width: 100%; }
+    .tab-btn { padding: 0.55rem 0.85rem; font-size: 0.8rem; }
+    .nav-links { gap: 0.4rem 0.75rem; }
+    .nav-links a { font-size: 0.85rem; }
+    .btn-terminal { font-size: 0.75rem; padding: 0.35rem 0.6rem; }
+  }
 
-    .logo-area {
-      justify-content: center;
-      width: 100%;
-    }
-
-    .nav-links {
-      justify-content: center;
-      width: 100%;
-      gap: 1rem;
-    }
-
-    main {
-      padding: 1.5rem 0.75rem;
-      gap: 2rem;
-    }
-
-    .tab-content {
-      padding: 1rem;
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 </style>
 </head>
 <body>
 
-  <!-- Background Glow & Grid -->
   <div class="bg-effects">
     <div class="glow-orb cyan"></div>
     <div class="glow-orb green"></div>
     <div class="grid-pattern"></div>
   </div>
 
-  <!-- Header -->
   <header>
     <div class="logo-area">
       <div class="logo-badge">IDT</div>
@@ -526,40 +423,36 @@
     </div>
     <ul class="nav-links">
       <li><a href="#overview">Overview</a></li>
-      <li><a href="DOCUMENTATION.md">Architecture</a></li>
-      <li><a href="SECURITY.md">Security</a></li>
-      <li><a href="DISCLAIMER.md">Disclaimer</a></li>
-      <li><a href="manifest.json" class="btn-terminal">manifest.json</a></li>
+      <li><a href="docs/DOCUMENTATION.md">Architecture</a></li>
+      <li><a href="docs/SECURITY.md">Security</a></li>
+      <li><a href="docs/DISCLAIMER.md">Disclaimer</a></li>
+      <li><a href="docs/manifest.json" class="btn-terminal">manifest.json</a></li>
     </ul>
   </header>
 
-  <!-- Main Content -->
   <main>
-    <!-- Hero Section -->
     <section class="hero" id="overview">
       <div class="hero-tag">
         <div class="dot"></div>
         v1.0.0 Production Ready • 100% Test Coverage
       </div>
-      <h1>High-Performance DNS Command Center & <span>Interactive TUI</span></h1>
+      <h1>High-Performance DNS Command Center &amp; <span>Interactive TUI</span></h1>
       <p>Benchmark, diagnose, tune, and monitor your DNS infrastructure with sub-millisecond precision, multi-protocol dialers (DoH, DoT, Standard), connection pooling, and self-aware offline detection.</p>
       <div class="hero-actions">
         <a href="#tabs" class="btn btn-primary">Explore Dashboard</a>
-        <a href="DOCUMENTATION.md" class="btn btn-secondary">Read Documentation</a>
+        <a href="docs/DOCUMENTATION.md" class="btn btn-secondary">Read Documentation</a>
       </div>
     </section>
 
-    <!-- Interactive Navigation Tabs -->
     <div class="tabs-container" id="tabs">
-      <div class="tabs-header">
-        <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">⚡ Dashboard & Features</button>
-        <button class="tab-btn" onclick="switchTab(event, 'tab-architecture')">🏛️ Architecture & Modules</button>
-        <button class="tab-btn" onclick="switchTab(event, 'tab-security')">🛡️ Security & Zero-Logging</button>
-        <button class="tab-btn" onclick="switchTab(event, 'tab-disclaimer')">⚖️ Legal Disclaimer</button>
+      <div class="tabs-header" role="tablist">
+        <button class="tab-btn active" data-tab="tab-overview" role="tab">⚡ Dashboard &amp; Features</button>
+        <button class="tab-btn" data-tab="tab-architecture" role="tab">🏛️ Architecture &amp; Modules</button>
+        <button class="tab-btn" data-tab="tab-security" role="tab">🛡️ Security &amp; Zero-Logging</button>
+        <button class="tab-btn" data-tab="tab-disclaimer" role="tab">⚖️ Legal Disclaimer</button>
       </div>
 
-      <!-- Tab 1: Overview -->
-      <div class="tab-content active" id="tab-overview">
+      <div class="tab-content active" id="tab-overview" role="tabpanel">
         <div class="feature-grid">
           <div class="card">
             <div class="card-icon">🚀</div>
@@ -573,13 +466,13 @@
           </div>
           <div class="card">
             <div class="card-icon">💻</div>
-            <h3>System DNS Discovery (Win/WSL/Android/Termux)</h3>
-            <p>Automatically examines and tests configured DNS across Windows PowerShell (`ipconfig`), WSL 2, Android system properties, and Termux resolv.conf non-conflictually.</p>
+            <h3>System DNS Discovery</h3>
+            <p>Automatically examines and tests configured DNS across Windows PowerShell (ipconfig), WSL 2, Android system properties, and Termux resolv.conf non-conflictually.</p>
           </div>
           <div class="card">
             <div class="card-icon">⚡</div>
             <h3>Connection Pooling Optimization</h3>
-            <p>Optimized HTTP transport layers (`GetSharedTransport`) with keep-alives and idle timeout bounds to eliminate socket exhaustion.</p>
+            <p>Optimized HTTP transport layers (GetSharedTransport) with keep-alives and idle timeout bounds to eliminate socket exhaustion.</p>
           </div>
           <div class="card">
             <div class="card-icon">🛡️</div>
@@ -594,11 +487,10 @@
           <div class="card">
             <div class="card-icon">⚙️</div>
             <h3>Production Default Config</h3>
-            <p>Shipped with optimized default master configurations (`configs/default.go`) and curated secure resolvers.</p>
+            <p>Shipped with optimized default master configurations (configs/default.go) and curated secure resolvers.</p>
           </div>
         </div>
 
-        <!-- Terminal Simulation -->
         <div class="terminal-box">
           <div class="terminal-header">
             <div class="t-dot red"></div>
@@ -607,18 +499,17 @@
             <div class="t-title">idt — bash</div>
           </div>
           <div class="terminal-body">
-            <div><span class="dim">$</span> <span class="cmd">go build -o idt . && ./idt</span></div>
-            <div><span class="dim">[✔]</span> Stage 1: Network Gateway Discovery... <span class="cmd">PASSED</span></div>
-            <div><span class="dim">[✔]</span> Stage 2: VPN / ISP Telemetry Inspection... <span class="cmd">SECURE</span></div>
-            <div><span class="dim">[✔]</span> Stage 3: Root Certificate Verification... <span class="cmd">VALID</span></div>
-            <div><span class="dim">[✔]</span> Stage 4: Pre-flight DNS Reachability... <span class="success">ONLINE</span></div>
-            <div class="warn">⚡ Launching TUI Dashboard v1.0.0 (Press Tab to navigate views)...</div>
+<span class="dim">$</span> <span class="cmd">go build -o idt . &amp;&amp; ./idt</span>
+<span class="dim">[✔]</span> Stage 1: Network Gateway Discovery... <span class="cmd">PASSED</span>
+<span class="dim">[✔]</span> Stage 2: VPN / ISP Telemetry Inspection... <span class="cmd">SECURE</span>
+<span class="dim">[✔]</span> Stage 3: Root Certificate Verification... <span class="cmd">VALID</span>
+<span class="dim">[✔]</span> Stage 4: Pre-flight DNS Reachability... <span class="success">ONLINE</span>
+<span class="warn">⚡ Launching TUI Dashboard v1.0.0 (Press Tab to navigate views)...</span>
           </div>
         </div>
       </div>
 
-      <!-- Tab 2: Architecture -->
-      <div class="tab-content" id="tab-architecture">
+      <div class="tab-content" id="tab-architecture" role="tabpanel">
         <div class="spec-grid">
           <div class="spec-item">
             <div class="spec-label">Language</div>
@@ -638,23 +529,22 @@
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <h3 style="color: var(--fg-bright); font-size: 1.2rem;">Core Module Architecture</h3>
-          <p>IDT is organized into decoupled, highly cohesive packages under `internal/` and `configs/`:</p>
-          <ul style="list-style: disc; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <li><strong>`configs/`</strong>: Production default master configuration module and serialization tests.</li>
-            <li><strong>`internal/cmd/`</strong>: Cobra root command center and subcommand routing.</li>
-            <li><strong>`internal/ui/`</strong>: Bubble Tea TUI state machine, theme system (`theme.go`), and modular renderers (`visual.go`).</li>
-            <li><strong>`internal/dialer/`</strong>: Multi-protocol transport stack (DoH, DoT, Standard, wire encoding, parsing).</li>
-            <li><strong>`internal/helper/`</strong>: Concurrency primitives (`SafeRun`, `SafeGo`), retry jitter, and shared connection pooling.</li>
-            <li><strong>`internal/errorhandling/`</strong>: Granular error classification and remediation engine.</li>
-            <li><strong>`internal/runner/`, `internal/stats/`, `internal/check/`, `internal/tune/`, `internal/compare/`</strong>: Analytics and benchmarking engines.</li>
+        <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+          <h3 style="color: var(--fg-bright); font-size: 1.15rem;">Core Module Architecture</h3>
+          <p>IDT is organized into decoupled, highly cohesive packages under <code>internal/</code> and <code>configs/</code>:</p>
+          <ul class="module-list">
+            <li><code>configs/</code>: Production default master configuration module and serialization tests.</li>
+            <li><code>internal/cmd/</code>: Cobra root command center and subcommand routing.</li>
+            <li><code>internal/ui/</code>: Bubble Tea TUI state machine, theme system (<code>theme.go</code>), and modular renderers (<code>visual.go</code>).</li>
+            <li><code>internal/dialer/</code>: Multi-protocol transport stack (DoH, DoT, Standard, wire encoding, parsing).</li>
+            <li><code>internal/helper/</code>: Concurrency primitives (<code>SafeRun</code>, <code>SafeGo</code>), retry jitter, and shared connection pooling.</li>
+            <li><code>internal/errorhandling/</code>: Granular error classification and remediation engine.</li>
+            <li><code>internal/runner/</code>, <code>internal/stats/</code>, <code>internal/check/</code>, <code>internal/tune/</code>, <code>internal/compare/</code>: Analytics and benchmarking engines.</li>
           </ul>
         </div>
       </div>
 
-      <!-- Tab 3: Security -->
-      <div class="tab-content" id="tab-security">
+      <div class="tab-content" id="tab-security" role="tabpanel">
         <div class="feature-grid">
           <div class="card">
             <h3>🔒 Zero-Logging Guarantee</h3>
@@ -671,34 +561,71 @@
         </div>
       </div>
 
-      <!-- Tab 4: Disclaimer -->
-      <div class="tab-content" id="tab-disclaimer">
+      <div class="tab-content" id="tab-disclaimer" role="tabpanel">
         <div class="card" style="border-left: 4px solid var(--warn);">
-          <h3>⚖️ Legal & Usage Notice</h3>
+          <h3>⚖️ Legal &amp; Usage Notice</h3>
           <p>IDT is designed exclusively for network administrators, security professionals, and systems engineers to benchmark and diagnose authorized DNS infrastructure. Users must only test networks and resolvers they own or have explicit written authorization to test. Provided "as is" without warranty of any kind.</p>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Footer -->
   <footer>
-    <div>IDT (Intelligent DNS Tool) • High-Performance DNS Command Center & TUI</div>
-    <div>Built with Go, Cobra, Bubble Tea, and Lip Gloss • <a href="DOCUMENTATION.md">Full Architecture</a></div>
+    <div>IDT (Intelligent DNS Tool) • High-Performance DNS Command Center &amp; TUI</div>
+    <div>Built with Go, Cobra, Bubble Tea, and Lip Gloss • <a href="docs/DOCUMENTATION.md">Full Architecture</a></div>
     <div class="brand-signature">Created by FJ™ Cybertronic Systems</div>
   </footer>
 
   <script>
-    function switchTab(evt, tabId) {
-      const contents = document.querySelectorAll('.tab-content');
-      contents.forEach(c => c.classList.remove('active'));
+    (function () {
+      function initTabs() {
+        var header = document.querySelector('.tabs-header');
+        if (!header) return;
 
-      const buttons = document.querySelectorAll('.tab-btn');
-      buttons.forEach(b => b.classList.remove('active'));
+        header.addEventListener('click', function (e) {
+          var btn = e.target.closest('.tab-btn');
+          if (!btn) return;
 
-      document.getElementById(tabId).classList.add('active');
-      evt.currentTarget.classList.add('active');
-    }
+          var id = btn.getAttribute('data-tab');
+          var target = document.getElementById(id);
+          if (!target) return;
+
+          var allContents = document.querySelectorAll('.tab-content');
+          var allBtns = document.querySelectorAll('.tab-btn');
+
+          for (var i = 0; i < allContents.length; i++) {
+            allContents[i].classList.remove('active');
+          }
+          for (var j = 0; j < allBtns.length; j++) {
+            allBtns[j].classList.remove('active');
+          }
+
+          btn.classList.add('active');
+          target.classList.add('active');
+        });
+
+        // Keyboard nav within tablist
+        header.addEventListener('keydown', function (e) {
+          var btns = Array.prototype.slice.call(header.querySelectorAll('.tab-btn'));
+          var current = btns.indexOf(document.activeElement);
+          if (current === -1) return;
+          var next = null;
+          if (e.key === 'ArrowRight') next = btns[(current + 1) % btns.length];
+          if (e.key === 'ArrowLeft') next = btns[(current - 1 + btns.length) % btns.length];
+          if (next) {
+            e.preventDefault();
+            next.focus();
+            next.click();
+          }
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTabs);
+      } else {
+        initTabs();
+      }
+    })();
   </script>
 </body>
 </html>
