@@ -1,0 +1,32 @@
+# Dependencies & Package Managers
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+
+# Build & Output Folders
+dist/
+build/
+out/
+target/
+*.o
+*.exe
+*.so
+*.dylib
+
+# Version Control & Local Settings
+.git/
+.idea/
+.vscode/
+
+# Large Files & Logs
+*.log
+*.tar.gz
+*.zip
+*.db
+*.sqlite
+
+# Environment Files (Protects API Keys)
+.env
+.env.*
