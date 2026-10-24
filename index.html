@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>IDT — Intelligent DNS Tool & TUI Command Center</title>
-<meta name="description" content="Professional CLI command center and real-time interactive TUI dashboard for DNS benchmarking, diagnostics, tuning, and monitoring.">
-<meta name="author" content="IDT Engineering Team">
+<meta name="description" content="Professional CLI command center and real-time interactive TUI dashboard for DNS benchmarking, diagnostics, time-diag workflows, tuning, and monitoring.">
+<meta name="author" content="FJ-cyberzilla">
 <meta name="theme-color" content="#1A1B26">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +25,8 @@
     --success: #9ECE6A;
     --warn: #E0AF68;
     --danger: #F7768E;
+    --purple: #BB9AF7;
+    --orange: #FF9E64;
     --border: #414868;
     --radius: 12px;
     --radius-sm: 6px;
@@ -59,7 +61,7 @@
     filter: blur(120px); opacity: 0.18;
   }
   .glow-orb.cyan { top: -20vmin; left: -20vmin; background: var(--accent); }
-  .glow-orb.green { bottom: -20vmin; right: -20vmin; background: var(--success); }
+  .glow-orb.orange { bottom: -20vmin; right: -20vmin; background: var(--orange); }
   .grid-pattern {
     position: absolute; inset: 0;
     background-image:
@@ -149,431 +151,385 @@
     color: var(--success);
     padding: 0.35rem 0.85rem;
     border-radius: 50px;
-    font-size: 0.75rem; font-weight: 600;
+    font-size: 0.8rem; font-weight: 600;
     font-family: var(--font-mono);
-    text-align: center; flex-wrap: wrap; justify-content: center;
-    max-width: 100%;
-  }
-  .hero-tag .dot {
-    width: 8px; height: 8px; background: var(--success);
-    border-radius: 50%; box-shadow: 0 0 8px var(--success);
-    flex-shrink: 0;
   }
   .hero h1 {
-    font-size: clamp(1.6rem, 6vw, 3rem);
+    font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 800; color: var(--fg-bright);
-    letter-spacing: -0.03em;
-    max-width: 800px; line-height: 1.15;
-    overflow-wrap: break-word;
+    letter-spacing: -0.03em; line-height: 1.15;
+    max-width: 900px;
   }
-  .hero h1 span { color: var(--accent); }
   .hero p {
-    font-size: clamp(0.9rem, 2.4vw, 1.15rem);
-    color: var(--fg); max-width: 700px; font-weight: 400;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    color: var(--fg); max-width: 750px;
+    line-height: 1.6;
   }
   .hero-actions {
-    display: flex; gap: 0.75rem; margin-top: 0.75rem;
-    flex-wrap: wrap; justify-content: center;
-    width: 100%;
+    display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center;
+    margin-top: 0.5rem;
   }
   .btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.35rem;
-    border-radius: var(--radius-sm);
-    font-weight: 600; font-size: 0.9rem;
-    text-decoration: none; transition: all 0.2s;
-    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1.4rem; border-radius: var(--radius);
+    font-weight: 600; font-size: 0.95rem; text-decoration: none;
+    transition: all 0.2s ease; cursor: pointer; border: none;
   }
   .btn-primary {
     background: var(--accent); color: var(--bg-base);
-    box-shadow: 0 0 20px var(--accent-glow);
+    box-shadow: 0 0 20px rgba(125, 207, 255, 0.3);
   }
-  .btn-primary:hover { background: #6cb9ff; transform: translateY(-2px); }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
   .btn-secondary {
+    background: var(--bg-elevated); color: var(--fg-bright);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Tabs container */
+  .tabs-container {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    color: var(--fg-bright);
-  }
-  .btn-secondary:hover {
-    border-color: var(--accent);
-    background: var(--bg-elevated);
-  }
-
-  /* Tabs */
-  .tabs-container {
-    display: flex; flex-direction: column;
-    gap: 1.25rem; min-width: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   }
   .tabs-header {
-    display: flex; gap: 0.5rem;
-    background: var(--bg-card);
-    padding: 0.5rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    display: flex; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
   }
-  .tabs-header::-webkit-scrollbar { height: 6px; }
-  .tabs-header::-webkit-scrollbar-thumb {
-    background: var(--border); border-radius: 3px;
-  }
+  .tabs-header::-webkit-scrollbar { display: none; }
   .tab-btn {
-    background: transparent; border: none;
-    color: var(--fg);
-    padding: 0.65rem 1rem;
-    border-radius: var(--radius-sm);
-    font-weight: 600; font-size: 0.85rem;
-    cursor: pointer; transition: all 0.2s;
-    white-space: nowrap; flex-shrink: 0;
-    font-family: inherit;
-    touch-action: manipulation;
+    background: transparent; border: none; color: var(--fg-muted);
+    padding: 1rem 1.25rem; font-weight: 600; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    border-bottom: 2px solid transparent;
   }
-  .tab-btn:hover {
-    color: var(--fg-bright);
-    background: var(--bg-elevated);
-  }
+  .tab-btn:hover { color: var(--fg-bright); }
   .tab-btn.active {
-    background: var(--bg-elevated);
-    color: var(--accent);
-    border: 1px solid var(--border);
-  }
-  .tab-content {
-    display: none;
+    color: var(--accent); border-bottom-color: var(--accent);
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: clamp(1rem, 3vw, 2.25rem);
-    min-width: 0;
   }
-  .tab-content.active {
-    display: flex; flex-direction: column; gap: 1.75rem;
+
+  .tab-content {
+    display: none; padding: clamp(1.5rem, 3vw, 2.5rem);
     animation: fadeIn 0.3s ease;
   }
+  .tab-content.active { display: flex; flex-direction: column; gap: 1.75rem; }
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Feature cards */
+  /* Grid layouts */
   .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-    gap: 1rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
   }
   .card {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.15rem;
-    display: flex; flex-direction: column; gap: 0.6rem;
-    transition: border-color 0.2s, transform 0.2s;
-    min-width: 0;
-    overflow-wrap: break-word;
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    position: relative; overflow: hidden;
   }
-  .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--accent);
   }
-  .card-icon { font-size: 1.4rem; }
-  .card h3 {
-    font-size: 1.05rem; font-weight: 700;
-    color: var(--fg-bright);
-  }
-  .card p {
-    font-size: 0.88rem; color: var(--fg);
-    overflow-wrap: break-word;
-  }
+  .card.green::before { background: var(--success); }
+  .card.orange::before { background: var(--orange); }
+  .card.purple::before { background: var(--purple); }
+  .card.danger::before { background: var(--danger); }
 
-  /* Terminal */
-  .terminal-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    font-family: var(--font-mono);
-    max-width: 100%;
-    min-width: 0;
+  .card h3 {
+    font-size: 1.15rem; font-weight: 700; color: var(--fg-bright);
+    display: flex; align-items: center; gap: 0.5rem;
   }
-  .terminal-header {
-    background: var(--bg-elevated);
-    padding: 0.65rem 0.9rem;
+  .card p { font-size: 0.95rem; color: var(--fg); line-height: 1.5; }
+
+  /* Terminal Preview Box */
+  .terminal-preview {
+    background: #0f1017; border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    font-family: var(--font-mono); font-size: 0.85rem;
+  }
+  .terminal-bar {
+    background: var(--bg-elevated); padding: 0.6rem 1rem;
     display: flex; align-items: center; gap: 0.5rem;
     border-bottom: 1px solid var(--border);
   }
-  .t-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .t-dot.red { background: var(--danger); }
-  .t-dot.yellow { background: var(--warn); }
-  .t-dot.green { background: var(--success); }
-  .t-title {
-    margin-left: 0.5rem;
-    font-size: 0.8rem; color: var(--fg-muted);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-red { background: var(--danger); }
+  .dot-yellow { background: var(--warn); }
+  .dot-green { background: var(--success); }
+  .terminal-title { margin-left: auto; margin-right: auto; color: var(--fg-muted); font-size: 0.8rem; }
   .terminal-body {
-    padding: clamp(0.85rem, 3vw, 1.25rem);
-    font-size: clamp(0.72rem, 2.2vw, 0.9rem);
-    color: var(--success);
-    display: flex; flex-direction: column; gap: 0.45rem;
+    padding: 1.25rem; color: var(--success); line-height: 1.6;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: pre;
   }
-  .terminal-body .cmd { color: var(--accent); }
-  .terminal-body .dim { color: var(--fg-muted); }
-  .terminal-body .warn { color: var(--warn); }
-  .terminal-body .success { color: var(--success); }
+  .dim { color: var(--fg-muted); }
+  .cmd { color: var(--accent); }
+  .warn-text { color: var(--warn); }
 
-  /* Specs */
-  .spec-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  /* Module list table / cards */
+  .module-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 1rem;
   }
-  .spec-item {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    padding: 1.1rem;
-    border-radius: var(--radius-sm);
-    min-width: 0;
-    overflow-wrap: break-word;
-  }
-  .spec-label {
-    font-size: 0.72rem; color: var(--fg-muted);
-    font-family: var(--font-mono);
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .spec-value {
-    font-size: 1.1rem; font-weight: 700;
-    color: var(--fg-bright); margin-top: 0.25rem;
-  }
-
-  /* Lists */
-  .module-list {
-    list-style: disc; padding-left: 1.25rem;
+  .module-card {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem;
     display: flex; flex-direction: column; gap: 0.5rem;
-    overflow-wrap: break-word;
   }
-  .module-list code {
+  .module-header {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .module-name {
+    font-family: var(--font-mono); font-weight: 700; color: var(--accent);
+    font-size: 1rem;
+  }
+  .module-badge {
+    background: rgba(125, 207, 255, 0.1); color: var(--accent);
+    font-size: 0.75rem; padding: 0.15rem 0.45rem; border-radius: 4px;
     font-family: var(--font-mono);
-    background: var(--bg-elevated);
-    padding: 0.1rem 0.35rem;
-    border-radius: 4px;
-    font-size: 0.85em;
-    word-break: break-word;
   }
+  .module-desc { font-size: 0.9rem; color: var(--fg); }
 
   /* Footer */
   footer {
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
-    padding: 2rem var(--pad-x);
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--fg-muted);
-    display: flex; flex-direction: column;
-    gap: 0.6rem; align-items: center;
+    background: var(--bg-card); border-top: 1px solid var(--border);
+    padding: 2rem var(--pad-x); text-align: center;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    align-items: center; font-size: 0.9rem; color: var(--fg-muted);
   }
   footer a { color: var(--accent); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
   .brand-signature {
-    color: #ff8700; font-weight: 700;
+    color: var(--orange);
     font-family: var(--font-mono);
-    letter-spacing: 0.05em; font-size: 0.9rem;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    header { justify-content: center; text-align: center; }
-    .logo-area { justify-content: center; width: 100%; }
-    .nav-links { justify-content: center; width: 100%; }
-  }
-  @media (max-width: 420px) {
-    .hero-actions { flex-direction: column; }
-    .hero-actions .btn { width: 100%; }
-    .tab-btn { padding: 0.55rem 0.85rem; font-size: 0.8rem; }
-    .nav-links { gap: 0.4rem 0.75rem; }
-    .nav-links a { font-size: 0.85rem; }
-    .btn-terminal { font-size: 0.75rem; padding: 0.35rem 0.6rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 12px rgba(255, 158, 100, 0.35);
+    font-weight: 700;
   }
 </style>
 </head>
 <body>
-
   <div class="bg-effects">
     <div class="glow-orb cyan"></div>
-    <div class="glow-orb green"></div>
+    <div class="glow-orb orange"></div>
     <div class="grid-pattern"></div>
   </div>
 
   <header>
     <div class="logo-area">
       <div class="logo-badge">IDT</div>
-      <div class="logo-title">Intelligent DNS Tool</div>
+      <div class="logo-title">Intelligent DNS Tool & TUI Command Center</div>
     </div>
     <ul class="nav-links">
       <li><a href="#overview">Overview</a></li>
-      <li><a href="docs/DOCUMENTATION.html">Architecture</a></li>
-      <li><a href="docs/SECURITY.html">Security</a></li>
-      <li><a href="docs/DISCLAIMER.html">Disclaimer</a></li>
-      <li><a href="docs/manifest.json" class="btn-terminal">manifest.json</a></li>
+      <li><a href="#timediag">Time-Diag Engine</a></li>
+      <li><a href="#modules">Modules</a></li>
+      <li><a href="#enterprise">Enterprise</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a class="btn-terminal" href="docs/DOCUMENTATION.html">Docs &rarr;</a></li>
     </ul>
   </header>
 
   <main>
     <section class="hero" id="overview">
-      <div class="hero-tag">
-        <div class="dot"></div>
-        v1.0.0 Production Ready • 100% Test Coverage
-      </div>
-      <h1>High-Performance DNS Command Center &amp; <span>Interactive TUI</span></h1>
-      <p>Benchmark, diagnose, tune, and monitor your DNS infrastructure with sub-millisecond precision, multi-protocol dialers (DoH, DoT, Standard), connection pooling, and self-aware offline detection.</p>
+      <div class="hero-tag">⚡ Go 1.21+ • Cobra • Bubble Tea • Lip Gloss</div>
+      <h1>Enterprise DNS Diagnostics & Chronological Workflow Engine</h1>
+      <p>IDT is a professional, high-performance network testing and DNS benchmarking command center. Featuring real-time TUI dashboards, encrypted multi-protocol transport (DoH, DoT, Standard), time-diag chronological test sequences, and robust vault instrumentation.</p>
       <div class="hero-actions">
-        <a href="#tabs" class="btn btn-primary">Explore Dashboard</a>
-        <a href="docs/DOCUMENTATION.html" class="btn btn-secondary">Read Documentation</a>
+        <a class="btn btn-primary" href="#modules">Explore All Modules</a>
+        <a class="btn btn-secondary" href="docs/DOCUMENTATION.html">Read Architecture Spec</a>
       </div>
     </section>
 
-    <div class="tabs-container" id="tabs">
+    <div class="tabs-container">
       <div class="tabs-header" role="tablist">
-        <button class="tab-btn active" data-tab="tab-overview" role="tab">⚡ Dashboard &amp; Features</button>
-        <button class="tab-btn" data-tab="tab-architecture" role="tab">🏛️ Architecture &amp; Modules</button>
-        <button class="tab-btn" data-tab="tab-security" role="tab">🛡️ Security &amp; Zero-Logging</button>
-        <button class="tab-btn" data-tab="tab-disclaimer" role="tab">⚖️ Legal Disclaimer</button>
+        <button class="tab-btn active" role="tab" data-tab="tab-overview">Overview &amp; Terminal</button>
+        <button class="tab-btn" role="tab" data-tab="tab-timediag">⏳ Time-Diag &amp; Workflow Engine</button>
+        <button class="tab-btn" role="tab" data-tab="tab-modules">📦 Synchronized Modules</button>
+        <button class="tab-btn" role="tab" data-tab="tab-enterprise">🏢 Enterprise Simulation</button>
+        <button class="tab-btn" role="tab" data-tab="tab-vault">🔐 Vault &amp; Instrumentation</button>
       </div>
 
+      <!-- Tab 1: Overview -->
       <div class="tab-content active" id="tab-overview" role="tabpanel">
         <div class="feature-grid">
           <div class="card">
-            <div class="card-icon">🚀</div>
-            <h3>Bubble Tea TUI Dashboard</h3>
-            <p>Interactive real-time terminal user interface powered by Bubble Tea and Lip Gloss with animated warm-up checklists and dynamic status indicators.</p>
+            <h3>⚡ Real-Time TUI Dashboard</h3>
+            <p>Interactive Bubble Tea terminal dashboard with animated multi-stage warm-up preflight verification, live latency percentiles, and color-coded health badges.</p>
           </div>
-          <div class="card">
-            <div class="card-icon">🌐</div>
-            <h3>Multi-Protocol Dialers</h3>
-            <p>Full support for DNS-over-HTTPS (RFC 8484), DNS-over-TLS (RFC 7858), and standard UDP/TCP resolution with wire encapsulation.</p>
+          <div class="card green">
+            <h3>📈 Statistical Precision</h3>
+            <p>Advanced RTT calculations including median, P90, P95, standard deviation, and side-by-side comparative oracle differential validation.</p>
           </div>
-          <div class="card">
-            <div class="card-icon">💻</div>
-            <h3>System DNS Discovery</h3>
-            <p>Automatically examines and tests configured DNS across Windows PowerShell (ipconfig), WSL 2, Android system properties, and Termux resolv.conf non-conflictually.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">⚡</div>
-            <h3>Connection Pooling Optimization</h3>
-            <p>Optimized HTTP transport layers (GetSharedTransport) with keep-alives and idle timeout bounds to eliminate socket exhaustion.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">🛡️</div>
-            <h3>Self-Aware Offline Detection</h3>
-            <p>Pre-flight reachability checks and VPN/ISP interface inspection with prominent attention cards and remediation guidance.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">📊</div>
-            <h3>Statistical Aggregation</h3>
-            <p>Precise measurement of min, max, mean, median, standard deviation, and p95/p99 latency percentiles.</p>
-          </div>
-          <div class="card">
-            <div class="card-icon">⚙️</div>
-            <h3>Production Default Config</h3>
-            <p>Shipped with optimized default master configurations (configs/default.go) and curated secure resolvers.</p>
+          <div class="card orange">
+            <h3>⏳ Chronological Time-Diag</h3>
+            <p>Dedicated <code>time-diag</code> workflow engine executing synchronized timestamped test sequences with comprehensive error diagnostics.</p>
           </div>
         </div>
 
-        <div class="terminal-box">
-          <div class="terminal-header">
-            <div class="t-dot red"></div>
-            <div class="t-dot yellow"></div>
-            <div class="t-dot green"></div>
-            <div class="t-title">idt — bash</div>
+        <div class="terminal-preview">
+          <div class="terminal-bar">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+            <div class="terminal-title">bash — idt command center</div>
           </div>
           <div class="terminal-body">
 <span class="dim">$</span> <span class="cmd">go build -o idt . &amp;&amp; ./idt</span>
-<span class="dim">[✔]</span> Stage 1: Network Gateway Discovery... <span class="cmd">PASSED</span>
-<span class="dim">[✔]</span> Stage 2: VPN / ISP Telemetry Inspection... <span class="cmd">SECURE</span>
-<span class="dim">[✔]</span> Stage 3: Root Certificate Verification... <span class="cmd">VALID</span>
-<span class="dim">[✔]</span> Stage 4: Pre-flight DNS Reachability... <span class="success">ONLINE</span>
-<span class="warn">⚡ Launching TUI Dashboard v1.0.0 (Press Tab to navigate views)...</span>
+<span class="dim">[✔]</span> Stage 1: Network Gateway Discovery &amp; TUN/VPN Interface Analysis... <span class="cmd">PASSED</span>
+<span class="dim">[✔]</span> Stage 2: Pre-flight DNS Reachability &amp; Private DNS Resolver Probe... <span class="success">ONLINE</span>
+<span class="dim">[✔]</span> Stage 3: Secure Connection Pools &amp; Vault Candidate Seed Loading... <span class="cmd">READY</span>
+<span class="warn-text">⚡ Launching IDT TUI Command Center v1.0.0 (Press Tab to navigate, Enter to engage)...</span>
           </div>
         </div>
       </div>
 
-      <div class="tab-content" id="tab-architecture" role="tabpanel">
-        <div class="spec-grid">
-          <div class="spec-item">
-            <div class="spec-label">Language</div>
-            <div class="spec-value">Go 1.21+</div>
-          </div>
-          <div class="spec-item">
-            <div class="spec-label">CLI Framework</div>
-            <div class="spec-value">Cobra</div>
-          </div>
-          <div class="spec-item">
-            <div class="spec-label">TUI Engine</div>
-            <div class="spec-value">Bubble Tea / Lip Gloss</div>
-          </div>
-          <div class="spec-item">
-            <div class="spec-label">Test Coverage</div>
-            <div class="spec-value">100% Passed</div>
-          </div>
+      <!-- Tab 2: Time-Diag Engine -->
+      <div class="tab-content" id="tab-timediag" role="tabpanel">
+        <div class="card orange">
+          <h3>⏳ Time-Diag Module &amp; NetworkWorkflowEngine</h3>
+          <p>The <strong><code>time-diag</code></strong> module orchestrates synchronized, chronological network and DNS diagnostic test sequences. It immediately communicates both the chronological aspect (exact timestamps, duration, sequence indexing) and the diagnostic purpose of handling network tests across DoH, DoT, and Standard protocols.</p>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 0.9rem;">
-          <h3 style="color: var(--fg-bright); font-size: 1.15rem;">Core Module Architecture</h3>
-          <p>IDT is organized into decoupled, highly cohesive packages under <code>internal/</code> and <code>configs/</code>:</p>
-          <ul class="module-list">
-            <li><code>configs/</code>: Production default master configuration module and serialization tests.</li>
-            <li><code>internal/cmd/</code>: Cobra root command center and subcommand routing.</li>
-            <li><code>internal/ui/</code>: Bubble Tea TUI state machine, theme system (<code>theme.go</code>), and modular renderers (<code>visual.go</code>).</li>
-            <li><code>internal/dialer/</code>: Multi-protocol transport stack (DoH, DoT, Standard, wire encoding, parsing).</li>
-            <li><code>internal/helper/</code>: Concurrency primitives (<code>SafeRun</code>, <code>SafeGo</code>), retry jitter, and shared connection pooling.</li>
-            <li><code>internal/errorhandling/</code>: Granular error classification and remediation engine.</li>
-            <li><code>internal/runner/</code>, <code>internal/stats/</code>, <code>internal/check/</code>, <code>internal/tune/</code>, <code>internal/compare/</code>: Analytics and benchmarking engines.</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="tab-content" id="tab-security" role="tabpanel">
         <div class="feature-grid">
           <div class="card">
-            <h3>🔒 Zero-Logging Guarantee</h3>
-            <p>IDT does not log, collect, transmit, or store any user queries, IP addresses, or telemetry data. All calculations execute locally.</p>
+            <h3>🔄 Synchronized Concurrency</h3>
+            <p>Utilizes bounded semaphores and <code>sync.RWMutex</code> to execute concurrent probes without thread contention or socket exhaustion.</p>
           </div>
-          <div class="card">
-            <h3>🔐 TLS 1.3 Enforcement</h3>
-            <p>All DoH and DoT connections enforce strict TLS minimum standards with rigorous certificate validation against system trust stores.</p>
+          <div class="card green">
+            <h3>🛡️ Error &amp; Helper Integration</h3>
+            <p>Integrates <code>errorhandling.ResolveError</code> for granular error categorization and <code>helper.Retry</code> with jittered backoff for transient recovery.</p>
           </div>
-          <div class="card">
-            <h3>🛡️ RFC Compliance</h3>
-            <p>Strict adherence to RFC 8484 (DoH) and RFC 7858 (DoT) wire formatting and security specifications.</p>
+          <div class="card purple">
+            <h3>📊 Live Dashboard Telemetry</h3>
+            <p>Feeds chronological event reports directly into the Bubble Tea TUI dashboard (`stateTimeDiagRunning`, `stateTimeDiagResults`) for live inspection.</p>
           </div>
         </div>
       </div>
 
-      <div class="tab-content" id="tab-disclaimer" role="tabpanel">
-        <div class="card" style="border-left: 4px solid var(--warn);">
-          <h3>⚖️ Legal &amp; Usage Notice</h3>
-          <p>IDT is designed exclusively for network administrators, security professionals, and systems engineers to benchmark and diagnose authorized DNS infrastructure. Users must only test networks and resolvers they own or have explicit written authorization to test. Provided "as is" without warranty of any kind.</p>
+      <!-- Tab 3: Modules -->
+      <div class="tab-content" id="tab-modules" role="tabpanel">
+        <p style="color: var(--fg); font-size: 1rem;">IDT is rigorously structured into 15 cohesive, decoupled Go internal packages adhering to absolute modularity and 100% test coverage:</p>
+        <div class="module-grid">
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">check</span><span class="module-badge">Health</span></div>
+            <div class="module-desc">Real-world connectivity checks and policy compliance anchor verification.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">cmd</span><span class="module-badge">Cobra</span></div>
+            <div class="module-desc">Root command center launcher, CLI flags, and subcommand execution routing.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">compare</span><span class="module-badge">Diff</span></div>
+            <div class="module-desc">Side-by-side DNS provider benchmarking, IP observation, and oracle diffing.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">config</span><span class="module-badge">Policy</span></div>
+            <div class="module-desc">Master configuration loader, servers catalog, security policies, and system DNS discovery.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">dialer</span><span class="module-badge">Transport</span></div>
+            <div class="module-desc">Multi-protocol transport stack (DoH, DoT with DPI bypass TLS fragmentation, Standard UDP/TCP, wire parser).</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">enterprise</span><span class="module-badge">Simulation</span></div>
+            <div class="module-desc">Distributed office performance matrices, multi-protocol testing, live traffic replay, and DNSSEC audits.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">errorhandling</span><span class="module-badge">Resilience</span></div>
+            <div class="module-desc">Granular error classification (<code>NetworkErrorDetails</code>), Android Private DNS detection, and robust fallback lookups.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">guardcat</span><span class="module-badge">Watchdog</span></div>
+            <div class="module-desc">Auto-finetuning, memory state monitoring, health tracking, DNS EOF trigger thresholds, and circuit breaking.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">helper</span><span class="module-badge">Primitives</span></div>
+            <div class="module-desc">Panic-recovering concurrency (<code>SafeRun</code>, <code>SafeGo</code>), retry jitter, and shared transport connection pooling.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">output</span><span class="module-badge">Rendering</span></div>
+            <div class="module-desc">Formatted terminal output tables and ANSI/ASCII telemetry renderers.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">runner</span><span class="module-badge">Execution</span></div>
+            <div class="module-desc">Concurrent benchmark execution engine with sliding window DNS EOF Reconnect Detection.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">stats</span><span class="module-badge">Metrics</span></div>
+            <div class="module-desc">Statistical aggregation of RTT percentiles, arithmetic mean, and standard deviation.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">time-diag</span><span class="module-badge">Workflow</span></div>
+            <div class="module-desc">Synchronized chronological network and DNS diagnostic test sequences via <code>NetworkWorkflowEngine</code>.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">tune</span><span class="module-badge">Optimization</span></div>
+            <div class="module-desc">Automated RTT distribution analysis, performance tuning, and resolver eligibility filtering.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">ui</span><span class="module-badge">TUI</span></div>
+            <div class="module-desc">Bubble Tea interactive dashboard state machine, Lip Gloss theme system, and modular visual components.</div>
+          </div>
+          <div class="module-card">
+            <div class="module-header"><span class="module-name">vault</span><span class="module-badge">Storage</span></div>
+            <div class="module-desc">Encrypted datalist candidate loader (AES-256-GCM), warm-up probing, live pool manager, and JSONL loggers.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Enterprise Simulation -->
+      <div class="tab-content" id="tab-enterprise" role="tabpanel">
+        <div class="feature-grid">
+          <div class="card purple">
+            <h3>🌐 Remote Office Matrix</h3>
+            <p>Concurrently simulates latency, jitter, and packet loss across distributed global data centers (New York, London, Tokyo, Frankfurt, Sydney).</p>
+          </div>
+          <div class="card orange">
+            <h3>📡 Multi-Protocol Probing</h3>
+            <p>Tests HTTP APIs, VoIP/SIP-RTP, SaaS (M365, Salesforce), and custom app protocols under high congestion and dropped packet conditions.</p>
+          </div>
+          <div class="card green">
+            <h3>📼 Traffic Replay Simulator</h3>
+            <p>Captures production transactions and replays them in lab settings with speed multipliers and jitter injection for safe deployments.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Vault & Security -->
+      <div class="tab-content" id="tab-vault" role="tabpanel">
+        <div class="feature-grid">
+          <div class="card">
+            <h3>🔐 AES-256-GCM Encryption</h3>
+            <p>Candidate seed resolver lists in <code>datalist/</code> can be encrypted securely at rest and decrypted transparently at runtime.</p>
+          </div>
+          <div class="card green">
+            <h3>📝 JSONL Instrumentation</h3>
+            <p>Append-only audit logging recording warm-ups, test probes, and live pool snapshots into gitignored <code>runs/</code> directories.</p>
+          </div>
+          <div class="card">
+            <h3>🛡️ Graceful Fallback Chain</h3>
+            <p>If seed files are absent on fresh clones, the live pool gracefully initializes robust built-in fallbacks (Cloudflare, Google, Quad9).</p>
+          </div>
         </div>
       </div>
     </div>
   </main>
 
   <footer>
-    <div>IDT (Intelligent DNS Tool) • High-Performance DNS Command Center &amp; TUI</div>
-    <div>Built with Go, Cobra, Bubble Tea, and Lip Gloss • <a href="docs/DOCUMENTATION.html">Full Architecture</a></div>
-    <div class="brand-signature">Created by FJ™ Cybertronic Systems</div>
+    <div>IDT (Intelligent DNS Tool) • Enterprise Network Benchmarking &amp; Chronological Diagnostics Suite</div>
+    <div>Built with Go 1.21+, Cobra, Bubble Tea, Lip Gloss &bull; <a href="docs/DOCUMENTATION.html">Technical Architecture Spec</a></div>
+    <div class="brand-signature">Created by FJ-cyberzilla &bull; FJ™ Cybertronic systems® &mdash; AUCTUMNUS MMXXVI &mdash;</div>
   </footer>
 
   <script>
@@ -604,7 +560,6 @@
           target.classList.add('active');
         });
 
-        // Keyboard nav within tablist
         header.addEventListener('keydown', function (e) {
           var btns = Array.prototype.slice.call(header.querySelectorAll('.tab-btn'));
           var current = btns.indexOf(document.activeElement);

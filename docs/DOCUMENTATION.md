@@ -129,12 +129,28 @@ IDT supports multiple enterprise DNS protocols with a unified abstraction layer 
 
 - **DNS-over-HTTPS (`doh.go`)**: Implements RFC 8484 compliant POST/GET requests over TLS 1.3 with HTTP/2 multiplexing.
 - **DNS-over-TLS (`dot.go`)**: Implements RFC 7858 secure TCP connections over port 853 with session resumption and SNI enforcement.
+- **DPI Bypass TLS Fragmentation (`dot.go`)**: Implements advanced ClientHello record fragmentation with a 1-byte leading fragment and TCP segment separation (`TCP_NODELAY`), bypassing deep packet inspection (DPI) SNI filters with automatic fallback to standard TLS dial upon handshake or connection error.
 - **Standard UDP/TCP (`standard.go`)**: Traditional raw socket resolution with automatic fallback from UDP to TCP on truncation (`TC bit`).
 - **Wire Encoder/Decoder (`wire.go`, `parse.go`)**: Binary DNS packet builder and response parser handling DNS header flags, RCODEs, question sections, and resource records (A, AAAA, CNAME, TXT) with strict bounds checking.
+- **DNS EOF Reconnect Detection (`internal/runner/runner.go`)**: Implements sliding-window telemetry tracking across hosts (20-second default window, configurable threshold), detecting EOF dropoffs and triggering proactive socket resets and reconnect recovery with full dashboard telemetry reporting.
+
+---
+## 7. Diagnostics, Benchmarking & Analytics (`internal/check`, `internal/runner`, `internal/tune`, `internal/compare`, `internal/stats`)
 
 ---
 
-## 7. Diagnostics, Benchmarking & Analytics (`internal/check`, `internal/runner`, `internal/tune`, `internal/compare`, `internal/stats`)
+## 8. Guardcat Auto-Finetuning & Monitoring Watchdog (`internal/guardcat/`)
+
+**Guardcat** is the integrated auto-finetuning, monitoring, and circuit-breaking watchdog module responsible for maintaining app health, memory states, DNS EOF trigger thresholds, pre-test socket readiness, and automated environment troubleshooting.
+
+### 8.1 Key Features & Subsystems
+- **Pre-Test DNS Resolution Readiness**: Performs minimal UDP/TCP socket probes against bootstrap DNS servers (`1.1.1.1:53` / `8.8.8.8:53`) to verify local network stack stability before test workflows execute.
+- **Memory State Monitoring & Auto-Finetuning**: Continuously inspects heap allocation (`runtime.MemStats`) and active goroutines. If allocation exceeds high watermark thresholds (e.g., 512MB), Guardcat automatically triggers garbage collection (`runtime.GC()`) or recommends environment restart.
+- **DNS EOF Trigger Threshold & Circuit Breaking**: Tracks consecutive failures and EOF/connection-reset/closed network errors per endpoint (`EOFTriggerThreshold`). If failures or EOF errors exceed configured thresholds (default: 3 consecutive), Guardcat marks the endpoint `UNHEALTHY` and instructs the workflow engine to bypass or use secondary resolvers.
+- **Permanent TUI Dashboard Tile**: Rendered persistently across all interactive views, displaying the live app status with animated pre-test preparation text (`Guardcat: Preparing for curiosity ...` with animated 3 dots in loop), color-coded status states (gray label, orange preparation, green "ready and safe!", and red alert), memory usage, and goroutine telemetry.
+
+---
+
 
 - **Runner (`runner.go`)**: Executes concurrent query batches across multiple dialers with precise microsecond timing.
 - **Stats (`stats.go`)**: Computes statistical aggregations including minimum, maximum, arithmetic mean, median, p95/p99 percentiles, and standard deviation.
@@ -209,7 +225,20 @@ IDT features a dedicated enterprise simulation engine designed by **FJ™ Cybert
 
 ---
 
-## 11. Testing & Quality Assurance
+## 11. Time-Diag & Network Workflow Engine (`internal/timediag/`)
+
+The **Time-Diag** subsystem houses the core **`NetworkWorkflowEngine`**, engineered to provide synchronized, chronological network and DNS diagnostic test sequences with precise timestamp tracking, diagnostic status reporting, and resilient error handling.
+
+### 11.1 Chronological Sequence Orchestration (`engine.go`)
+- **`NetworkWorkflowEngine`**: Manages synchronized concurrent probing across configured dialers with bounding semaphores and `sync.RWMutex` state protection.
+- **`ChronologicalEvent`**: Records precise execution timestamps (`Timestamp`, `SequenceIndex`, `PhaseName`, `Target`, `Protocol`, `Duration`, `Success`, `ErrorDetails`, `DiagnosticMsg`).
+- **Resilient Execution Wrapper**: Integrates `helper.SafeRun` for panic recovery and `helper.Retry` for jittered exponential backoff retry on transient network drops.
+- **Error Resolution Integration**: Seamlessly maps raw errors to structured diagnostic remediation advice using `errorhandling.ResolveError`.
+- **TUI Dashboard Integration**: Exposes test results and chronological event flows directly into the Bubble Tea TUI dashboard (`stateTimeDiagRunning`, `stateTimeDiagResults`), allowing operators to inspect step-by-step telemetry in real time.
+
+---
+
+## 12. Testing & Quality Assurance
 
 IDT maintains **100% unit test coverage** across all internal and top-level packages:
 - `configs/default_test.go`
@@ -219,6 +248,7 @@ IDT maintains **100% unit test coverage** across all internal and top-level pack
 - `internal/config/config_test.go`
 - `internal/runner/runner_test.go`
 - `internal/check/check_test.go`
+- `internal/timediag/engine_test.go`
 - `internal/tune/tune_test.go`
 - `internal/output/output_test.go`
 - `internal/compare/compare_test.go`
@@ -237,19 +267,19 @@ go test -v ./...
 
 ---
 
-## 12. Compilation & Usage
+## 13. Compilation & Usage
 
-### 12.1 Build Executable
+### 13.1 Build Executable
 ```bash
 go build -o idt .
 ```
 
-### 12.2 Run Interactive Dashboard
+### 13.2 Run Interactive Dashboard
 ```bash
 ./idt
 ```
 
-### 12.3 Run Headless Benchmark
+### 13.3 Run Headless Benchmark
 ```bash
 ./idt --concurrency 20 --timeout 3s
 ```

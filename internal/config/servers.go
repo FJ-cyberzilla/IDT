@@ -39,18 +39,21 @@ func NormalizeDialers(dialers []Dialer) []Dialer {
 
 // Options carries runtime configuration.
 type Options struct {
-	Target    string
-	Dials     int
-	Timeout   time.Duration
-	JitterMin time.Duration
-	JitterMax time.Duration
-	MaxDials  int
-	Plan      bool
-	Safety    bool
-	Check     bool
-	Tune      bool
-	Prefer    string
-	Tag       string
+	Target              string
+	Dials               int
+	Timeout             time.Duration
+	JitterMin           time.Duration
+	JitterMax           time.Duration
+	MaxDials            int
+	Plan                bool
+	Safety              bool
+	Check               bool
+	Tune                bool
+	Prefer              string
+	Tag                 string
+	EOFReconnectEnabled bool
+	EOFTriggerThreshold int
+	EOFTimeWindow       time.Duration
 }
 
 // SafeTargets is a rotation pool. All neutral. None flaggable.
@@ -106,11 +109,14 @@ func DefaultDialers() []Dialer {
 
 func DefaultOptions() Options {
 	return Options{
-		Target:    "example.com",
-		Dials:     3,
-		Timeout:   3 * time.Second,
-		JitterMin: 300 * time.Millisecond,
-		JitterMax: 900 * time.Millisecond,
-		MaxDials:  90,
+		Target:              "example.com",
+		Dials:               3,
+		Timeout:             3 * time.Second,
+		JitterMin:           300 * time.Millisecond,
+		JitterMax:           900 * time.Millisecond,
+		MaxDials:            90,
+		EOFReconnectEnabled: true,
+		EOFTriggerThreshold: 3,
+		EOFTimeWindow:       20 * time.Second,
 	}
 }

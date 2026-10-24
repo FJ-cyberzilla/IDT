@@ -15,11 +15,61 @@ import (
 const maxConcurrent = 3
 
 type Result struct {
-	Dialer  config.Dialer
-	Summary stats.Summary
-	Samples []time.Duration
-	IPs     [][]string
-	Total   int
+	Dialer                config.Dialer
+	Summary               stats.Summary
+	Samples               []time.Duration
+	IPs                   [][]string
+	Total                 int
+	EOFErrorsCount        int
+	EOFReconnectTriggered bool
+}
+
+var (
+	eofMutex  sync.Mutex
+	eofEvents []eofEvent
+)
+
+type eofEvent struct {
+	host      string
+	timestamp time.Time
+}
+
+func recordEOFAndCheckReconnect(host string, opts config.Options) bool {
+	if !opts.EOFReconnectEnabled {
+		return false
+	}
+	eofMutex.Lock()
+	defer eofMutex.Unlock()
+
+	now := time.Now()
+	window := opts.EOFTimeWindow
+	if window <= 0 {
+		window = 20 * time.Second
+	}
+	threshold := opts.EOFTriggerThreshold
+	if threshold <= 0 {
+		threshold = 3
+	}
+
+	valid := make([]eofEvent, 0, len(eofEvents))
+	for _, ev := range eofEvents {
+		if now.Sub(ev.timestamp) <= window {
+			valid = append(valid, ev)
+		}
+	}
+	valid = append(valid, eofEvent{host: host, timestamp: now})
+	eofEvents = valid
+
+	hosts := map[string]bool{}
+	for _, ev := range eofEvents {
+		hosts[ev.host] = true
+	}
+
+	if len(hosts) >= threshold {
+		eofEvents = nil
+		return true
+	}
+	return false
 }
 
 func NewDialer(d config.Dialer, timeout time.Duration) dialer.Dialer {
@@ -110,8 +160,16 @@ func runOneAttempt(ctx context.Context, d config.Dialer, opts config.Options) Re
 
 		ans, err := dl.Dial(ctx, target)
 		if err != nil {
-			if strings.Contains(err.Error(), "429") {
+			errStr := strings.ToLower(err.Error())
+			if strings.Contains(errStr, "429") {
 				break
+			}
+			if strings.Contains(errStr, "eof") || strings.Contains(errStr, "connection reset by peer") || strings.Contains(errStr, "closed") {
+				r.EOFErrorsCount++
+				if recordEOFAndCheckReconnect(d.Address, opts) {
+					r.EOFReconnectTriggered = true
+					time.Sleep(100 * time.Millisecond)
+				}
 			}
 			continue
 		}

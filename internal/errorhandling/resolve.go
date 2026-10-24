@@ -20,6 +20,7 @@ const (
 	CategoryTLS         ErrorCategory = "TLS_HANDSHAKE_ERROR"
 	CategoryRefused     ErrorCategory = "CONNECTION_REFUSED"
 	CategoryUnreachable ErrorCategory = "NETWORK_UNREACHABLE"
+	CategoryCorruption  ErrorCategory = "DNS_CORRUPTION"
 	CategoryCanceled    ErrorCategory = "CANCELED"
 	CategoryUnknown     ErrorCategory = "UNKNOWN"
 )
@@ -147,6 +148,18 @@ func ResolveError(err error, target string) NetworkErrorDetails {
 			OriginalError:  errStr,
 			Target:         target,
 			ActionableHint: "Network unreachable. Check airplane mode, Wi-Fi router, mobile data, or active VPN tunnel state.",
+			IsTransient:    true,
+			Timestamp:      now,
+		}
+	}
+
+	// 7. DNS Corruption / Malformed Response
+	if strings.Contains(strings.ToLower(errStr), "corrupt") || strings.Contains(strings.ToLower(errStr), "malformed") || strings.Contains(strings.ToLower(errStr), "invalid transaction id") {
+		return NetworkErrorDetails{
+			Category:       CategoryCorruption,
+			OriginalError:  errStr,
+			Target:         target,
+			ActionableHint: "DNS response corruption detected (malformed packet or ID mismatch). Auto-reconnect triggered. Note: non-existent domains may cause false triggers.",
 			IsTransient:    true,
 			Timestamp:      now,
 		}

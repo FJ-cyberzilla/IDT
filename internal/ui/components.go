@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"idt/internal/timediag"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -18,7 +20,8 @@ func (m Model) View() string {
 	}
 
 	header := HeaderStyle.Render("🌐 IDT — ENTERPRISE SECURE DIALER COMMAND CENTER")
-	sb.WriteString(header + "\n\n")
+	sb.WriteString(header + "\n")
+	sb.WriteString(RenderGuardcatTile(m.guardcatPhase, m.guardcatDotCount, 32, 14, width) + "\n\n")
 
 	switch m.state {
 	case stateMenu:
@@ -79,12 +82,12 @@ func (m Model) View() string {
 		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
 		sb.WriteString(RenderReplayResultsView(m.replayResult, width))
 
-	case stateColdStartRunning, stateHotlineRunning, stateDNSSECRunning, stateTimezoneRunning:
+	case stateColdStartRunning, stateHotlineRunning, stateDNSSECRunning, stateTimezoneRunning, stateCorruptionRunning, stateTimeDiagRunning:
 		elapsed := time.Since(m.startTime).Round(time.Second)
 		timerStr := formatTimerWithETA(elapsed, 20*time.Second)
-		sb.WriteString(RenderPhaseBadge("ENTERPRISE", "ENTER") + "\n\n")
+		sb.WriteString(RenderPhaseBadge("TIMEDIAG", "TIMEDIAG") + "\n\n")
 		sb.WriteString(fmt.Sprintf("\n  %s %s %s\n\n", m.spinner.View(), lipgloss.NewStyle().Bold(true).Foreground(ColorPrimary).Render(m.loadingText), Dim(timerStr)))
-		sb.WriteString(HelpStyle.Render("Subsystem Execution • ESC: Cancel Operation  │  q: Quit"))
+		sb.WriteString(HelpStyle.Render("Chronological Workflow Engine • ESC: Cancel Operation  │  q: Quit"))
 
 	case stateColdStartResults:
 		sb.WriteString(RenderPhaseBadge("COLD START", "COLD") + "\n\n")
@@ -101,6 +104,14 @@ func (m Model) View() string {
 	case stateTimezoneResults:
 		sb.WriteString(RenderPhaseBadge("TIMEZONE", "TIMEZONE") + "\n\n")
 		sb.WriteString(RenderTimezoneResultsView(m.timezoneReports, width))
+
+	case stateCorruptionResults:
+		sb.WriteString(RenderPhaseBadge("CORRUPTION", "CORRUPT") + "\n\n")
+		sb.WriteString(RenderCorruptionResultsView(m.corruptionResult, width))
+
+	case stateTimeDiagResults:
+		sb.WriteString(RenderPhaseBadge("TIMEDIAG", "TIMEDIAG") + "\n\n")
+		sb.WriteString(RenderTimeDiagResultsView(m.timeDiagReport, width))
 
 	case stateAbout:
 		sb.WriteString(RenderPhaseBadge("ABOUT", "ABOUT") + "\n\n")
@@ -138,4 +149,32 @@ func (m Model) View() string {
 		boxWidth = 50
 	}
 	return lipgloss.NewStyle().Width(boxWidth).Padding(1, 1).Render(sb.String())
+}
+
+func RenderTimeDiagResultsView(report timediag.WorkflowReport, width int) string {
+	var sb strings.Builder
+	sb.WriteString(TitleStyle.Render(" ⏳ TIME-DIAG — CHRONOLOGICAL NETWORK & DNS WORKFLOW REPORT ") + "\n")
+	sb.WriteString(Dim(strings.Repeat("─", width-6)) + "\n\n")
+
+	sb.WriteString(fmt.Sprintf(" Status:         %s\n", report.OverallStatus))
+	sb.WriteString(fmt.Sprintf(" Verdict:        %s\n", report.SummaryVerdict))
+	sb.WriteString(fmt.Sprintf(" Total Duration: %v\n\n", report.TotalDuration))
+
+	sb.WriteString(SubtitleStyle.Render(" Chronological Event Sequence: ") + "\n")
+	for _, ev := range report.Events {
+		status := "✅ OK"
+		if !ev.Success {
+			status = "❌ FAIL"
+		}
+		sb.WriteString(fmt.Sprintf(" [%s] %-25s  %s  Duration: %-6v\n   ↳ %s\n",
+			ev.Timestamp.Format("15:04:05.000"),
+			ev.PhaseName,
+			status,
+			ev.Duration,
+			ev.DiagnosticMsg,
+		))
+	}
+
+	sb.WriteString("\n" + HelpStyle.Render("ENTER/ESC: Return to Main Command Center"))
+	return sb.String()
 }

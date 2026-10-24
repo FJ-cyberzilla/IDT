@@ -89,6 +89,25 @@ func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.V
 	sb.WriteString(fmt.Sprintf("  • Termux Resolv.conf: %v\n", sys.ResolvConfServers))
 	sb.WriteString(fmt.Sprintf("  • DoT / DoH / Private DNS: %v\n", append(sys.DoTServers, sys.DoHServers...)))
 	sb.WriteString(fmt.Sprintf("  • Tunnel / VPN Status: %s\n", detectConnectionType()))
+
+	eofCount := 0
+	eofTriggered := false
+	for _, r := range sorted {
+		eofCount += r.EOFErrorsCount
+		if r.EOFReconnectTriggered {
+			eofTriggered = true
+		}
+	}
+	eofStatus := Green("STANDBY (Zero EOF failures)")
+	if eofCount > 0 {
+		if eofTriggered {
+			eofStatus = Red(fmt.Sprintf("TRIGGERED (%d EOF errors detected across hosts in window -> Auto-reconnect executed)", eofCount))
+		} else {
+			eofStatus = Yellow(fmt.Sprintf("MONITORING (%d EOF errors detected, below threshold %d)", eofCount, opts.EOFTriggerThreshold))
+		}
+	}
+	sb.WriteString(fmt.Sprintf("  • DNS EOF Reconnect Detection: %s (Threshold: %d / Window: %v)\n", eofStatus, opts.EOFTriggerThreshold, opts.EOFTimeWindow))
+
 	sb.WriteString(fmt.Sprintf("  • Hijack & Tampering Check: %s\n\n", Green("PASSED (Oracle Verified)")))
 
 	rec := tune.GetRecommendationString(sorted, verdicts, opts)
@@ -277,4 +296,23 @@ func RenderTimezoneResultsView(reports []enterprise.TimezoneReport, width int) s
 
 	sb.WriteString("\n" + HelpStyle.Render("ESC/ENTER: Return to Submenu  │  q: Quit"))
 	return renderPanel("TIMEZONE ROUTING TELEMETRY", sb.String(), width)
+}
+
+// RenderCorruptionResultsView renders DNS corruption detection and auto-reconnect audit telemetry.
+func RenderCorruptionResultsView(res enterprise.CorruptionResult, width int) string {
+	var sb strings.Builder
+	sb.WriteString(Cyan("🔍 DNS Corruption Detection & Auto-Reconnect Audit.\n\n"))
+	sb.WriteString(fmt.Sprintf("  • Target Resolver:       %s\n", Bold(res.Config.Target)))
+	sb.WriteString(fmt.Sprintf("  • Test Domain:           %s\n", res.Config.TestDomain))
+	sb.WriteString(fmt.Sprintf("  • Non-Existent Domain:   %s (NXDOMAIN)\n", res.Config.NonExistentDomain))
+	sb.WriteString(fmt.Sprintf("  • Total Queries Audited: %d\n", res.TotalQueries))
+	sb.WriteString(fmt.Sprintf("  • Corrupted Count:       %d\n", res.CorruptedCount))
+	sb.WriteString(fmt.Sprintf("  • False Positives (NX):  %d\n", res.FalsePositives))
+	sb.WriteString(fmt.Sprintf("  • Reconnect Triggered:   %t (Threshold: %d)\n", res.ReconnectTriggered, res.Config.Threshold))
+	sb.WriteString(fmt.Sprintf("  • Status:                %s\n", Bold(res.Status)))
+	sb.WriteString(fmt.Sprintf("  • Analysis & Remediation:%s\n", Dim(res.Details)))
+	sb.WriteString(fmt.Sprintf("  • Note:                  %s\n", Yellow("Auto-reconnects when server sends corrupted responses. May cause false triggers with non-existent domains.")))
+
+	sb.WriteString("\n" + HelpStyle.Render("ESC/ENTER: Return to Submenu  │  q: Quit"))
+	return renderPanel("DNS CORRUPTION DETECTION & RECONNECT AUDIT", sb.String(), width)
 }

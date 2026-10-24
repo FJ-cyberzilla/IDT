@@ -152,3 +152,15 @@ func BenchmarkRunTrafficReplay(b *testing.B) {
 		RunTrafficReplay(ctx, SampleProductionTraffic, cfg)
 	}
 }
+
+func TestRunDNSCorruptionDetection(t *testing.T) {
+	ctx := context.Background()
+	res := RunDNSCorruptionDetection(ctx, DefaultCorruptionConfig)
+
+	if res.TotalQueries != DefaultCorruptionConfig.Iterations {
+		t.Errorf("expected %d queries, got %d", DefaultCorruptionConfig.Iterations, res.TotalQueries)
+	}
+	if res.Status == "" {
+		t.Errorf("missing corruption detection status")
+	}
+}

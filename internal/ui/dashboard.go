@@ -12,6 +12,7 @@ import (
 	"idt/internal/enterprise"
 	"idt/internal/errorhandling"
 	"idt/internal/runner"
+	"idt/internal/timediag"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -46,6 +47,10 @@ const (
 	stateDNSSECResults
 	stateTimezoneRunning
 	stateTimezoneResults
+	stateCorruptionRunning
+	stateCorruptionResults
+	stateTimeDiagRunning
+	stateTimeDiagResults
 	stateAbout
 	stateOfflineError
 )
@@ -87,6 +92,10 @@ type Model struct {
 	hotlineReport     enterprise.ProtocolTestResult
 	dnssecResult      enterprise.DNSSECResult
 	timezoneReports   []enterprise.TimezoneReport
+	corruptionResult  enterprise.CorruptionResult
+	timeDiagReport    timediag.WorkflowReport
+	guardcatPhase     string
+	guardcatDotCount  int
 	width             int
 	height            int
 }
@@ -109,6 +118,7 @@ func InitialModel() Model {
 			"🔍 Run Connectivity Check",
 			"📈 Run Tuning Analysis",
 			"🏢 Advanced Enterprise & Protocol Simulation",
+			"⏳ Time-Diag Network Workflow Engine (Chronological)",
 			"ℹ️ About Us & App Capabilities",
 			"❌ Exit Command Center",
 		},
@@ -117,15 +127,18 @@ func InitialModel() Model {
 			"📡 Multi-Protocol Testing (HTTP, VoIP, SaaS, Custom Apps)",
 			"📼 Live Traffic Capture & Lab Replay Simulator",
 			"🛡️ DNSSEC Chain-of-Trust Audit",
+			"🔍 DNS Corruption Detection & Auto-Reconnect Audit",
 			"🌍 Timezone-Aware Regional Routing Analysis",
 			"🔥 Hotline Test (High Congestion Times under Load)",
 			"⬅️ Return to Main Command Center",
 		},
-		cursor:     0,
-		spinner:    s,
-		warmupStep: stepInit,
-		opts:       opts,
-		dialers:    dialers,
+		cursor:           0,
+		spinner:          s,
+		warmupStep:       stepInit,
+		opts:             opts,
+		dialers:          dialers,
+		guardcatPhase:    "preparing",
+		guardcatDotCount: 0,
 	}
 }
 
@@ -271,10 +284,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = stateEnterpriseMenu
 					m.enterpriseCursor = 0
 					return m, nil
-				case 7: // About Us
+				case 7: // Time-Diag Workflow Engine
+					m.state = stateTimeDiagRunning
+					m.startTime = time.Now()
+					m.loadingText = "Executing Time-Diag Chronological Network & DNS Workflow Engine..."
+					return m, tea.Batch(m.spinner.Tick, runTimeDiagCmd(m.opts, m.dialers))
+				case 8: // About Us
 					m.state = stateAbout
 					return m, nil
-				case 8: // Exit
+				case 9: // Exit
 					return m, tea.Quit
 				}
 			} else if m.state == stateEnterpriseMenu {
@@ -299,24 +317,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.startTime = time.Now()
 					m.loadingText = "Auditing DNSSEC Chain-of-Trust and Signature Validation..."
 					return m, tea.Batch(m.spinner.Tick, runDNSSECCmd())
-				case 4: // Timezone
+				case 4: // Corruption Detection
+					m.state = stateCorruptionRunning
+					m.startTime = time.Now()
+					m.loadingText = "Auditing DNS Response Integrity & Auto-reconnect Triggers..."
+					return m, tea.Batch(m.spinner.Tick, runCorruptionCmd())
+				case 5: // Timezone
 					m.state = stateTimezoneRunning
 					m.startTime = time.Now()
 					m.loadingText = "Analyzing Timezone-Aware Regional Routing Latencies..."
 					return m, tea.Batch(m.spinner.Tick, runTimezoneCmd())
-				case 5: // Hotline
+				case 6: // Hotline
 					m.state = stateHotlineRunning
 					m.startTime = time.Now()
 					m.loadingText = "Running Hotline Test for High Congestion Times under Load..."
 					return m, tea.Batch(m.spinner.Tick, runHotlineCmd())
-				case 6: // Back to Menu
+				case 7: // Back to Menu
 					m.state = stateMenu
 					return m, nil
 				}
-			} else if m.state == stateMatrixResults || m.state == stateProtocolResults || m.state == stateReplayResults || m.state == stateDNSSECResults || m.state == stateTimezoneResults || m.state == stateHotlineResults {
+			} else if m.state == stateMatrixResults || m.state == stateProtocolResults || m.state == stateReplayResults || m.state == stateDNSSECResults || m.state == stateTimezoneResults || m.state == stateHotlineResults || m.state == stateCorruptionResults {
 				m.state = stateEnterpriseMenu
 				return m, nil
-			} else if m.state == stateResults || m.state == stateDashboard || m.state == stateCheckResults || m.state == stateTuneResults || m.state == stateServers || m.state == stateAbout || m.state == stateOfflineError || m.state == stateColdStartResults {
+			} else if m.state == stateResults || m.state == stateDashboard || m.state == stateCheckResults || m.state == stateTuneResults || m.state == stateServers || m.state == stateAbout || m.state == stateOfflineError || m.state == stateColdStartResults || m.state == stateTimeDiagResults {
 				m.state = stateMenu
 				return m, nil
 			}
@@ -325,6 +348,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
+		m.guardcatDotCount++
+		if m.guardcatPhase == "preparing" && m.guardcatDotCount > 6 {
+			m.guardcatPhase = "ready"
+		}
+		if m.state == stateOfflineError {
+			m.guardcatPhase = "error"
+		}
 		return m, cmd
 
 	case checkCompleteMsg:
@@ -371,6 +401,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case timezoneCompleteMsg:
 		m.state = stateTimezoneResults
 		m.timezoneReports = msg.reports
+		return m, nil
+
+	case corruptionCompleteMsg:
+		m.state = stateCorruptionResults
+		m.corruptionResult = msg.result
+		return m, nil
+
+	case timeDiagCompleteMsg:
+		m.state = stateTimeDiagResults
+		m.timeDiagReport = msg.report
 		return m, nil
 
 	case warmupProgressMsg:
@@ -556,6 +596,10 @@ type timezoneCompleteMsg struct {
 	reports []enterprise.TimezoneReport
 }
 
+type corruptionCompleteMsg struct {
+	result enterprise.CorruptionResult
+}
+
 func runCheckCmd(dialers []config.Dialer) tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
@@ -686,5 +730,28 @@ func runTimezoneCmd() tea.Cmd {
 		defer cancel()
 		reps := enterprise.AnalyzeTimezones(ctx)
 		return timezoneCompleteMsg{reports: reps}
+	}
+}
+
+func runCorruptionCmd() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		res := enterprise.RunDNSCorruptionDetection(ctx, enterprise.DefaultCorruptionConfig)
+		return corruptionCompleteMsg{result: res}
+	}
+}
+
+type timeDiagCompleteMsg struct {
+	report timediag.WorkflowReport
+}
+
+func runTimeDiagCmd(opts config.Options, dialers []config.Dialer) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		engine := timediag.NewNetworkWorkflowEngine(opts, dialers)
+		report, _ := engine.Run(ctx)
+		return timeDiagCompleteMsg{report: report}
 	}
 }
