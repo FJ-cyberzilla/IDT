@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"idt/internal/compare"
 	"idt/internal/config"
 	"idt/internal/enterprise"
+	"idt/internal/inspect"
 	"idt/internal/runner"
 	"idt/internal/tune"
 )
@@ -81,14 +83,19 @@ func RenderCheckResultsView(results []runner.Result, width int) string {
 // RenderTuneResultsView renders elite RTT distribution and tuning analysis.
 func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.Verdict, opts config.Options, width int) string {
 	var sb strings.Builder
-	sys := config.DiscoverSystemDNS()
-	sb.WriteString(Bold(Cyan("🛰️ SYSTEM & TUNNEL TELEMETRY INSPECTION:\n")))
-	sb.WriteString(fmt.Sprintf("  • Windows System DNS: %v\n", sys.WindowsDNS))
-	sb.WriteString(fmt.Sprintf("  • WSL 2 Host DNS: %v\n", sys.WSLDNS))
-	sb.WriteString(fmt.Sprintf("  • Android System DNS: %v\n", sys.AndroidDNS))
-	sb.WriteString(fmt.Sprintf("  • Termux Resolv.conf: %v\n", sys.ResolvConfServers))
-	sb.WriteString(fmt.Sprintf("  • DoT / DoH / Private DNS: %v\n", append(sys.DoTServers, sys.DoHServers...)))
-	sb.WriteString(fmt.Sprintf("  • Tunnel / VPN Status: %s\n", detectConnectionType()))
+	diag := inspect.RunDiagnostics(context.Background())
+	sys := diag.DNSConfig
+
+	sb.WriteString(Bold(Cyan("🛰️ COMPREHENSIVE SYSTEM & TELEMETRY INSPECTION:\n")))
+	sb.WriteString(fmt.Sprintf("  • Pre-test Connectivity: %s\n", diag.ConnectivityStatus))
+	sb.WriteString(fmt.Sprintf("  • Termux Resolv.conf:    %v\n", sys.ResolvConfServers))
+	sb.WriteString(fmt.Sprintf("  • Android System DNS:    %v\n", sys.AndroidDNS))
+	sb.WriteString(fmt.Sprintf("  • Android VPN Active:    %v\n", sys.AndroidVPNActive))
+	sb.WriteString(fmt.Sprintf("  • Private DNS State:     %s (Specifier: %s)\n", sys.PrivateDNSState, sys.AndroidPrivateDNS))
+	sb.WriteString(fmt.Sprintf("  • Browser DoH Detection: %s\n", sys.BrowserDoHDetails))
+	sb.WriteString(fmt.Sprintf("  • Connected Country:     %s\n", sys.ConnectedCountry))
+	sb.WriteString(fmt.Sprintf("  • DoT / DoH Endpoints:   %v\n", append(sys.DoTServers, sys.DoHServers...)))
+	sb.WriteString(fmt.Sprintf("  • Guardcat Watchdog:     %s\n\n", diag.GuardcatRecommendation))
 
 	eofCount := 0
 	eofTriggered := false
@@ -107,7 +114,6 @@ func RenderTuneResultsView(sorted []runner.Result, verdicts map[string]compare.V
 		}
 	}
 	sb.WriteString(fmt.Sprintf("  • DNS EOF Reconnect Detection: %s (Threshold: %d / Window: %v)\n", eofStatus, opts.EOFTriggerThreshold, opts.EOFTimeWindow))
-
 	sb.WriteString(fmt.Sprintf("  • Hijack & Tampering Check: %s\n\n", Green("PASSED (Oracle Verified)")))
 
 	rec := tune.GetRecommendationString(sorted, verdicts, opts)

@@ -10,6 +10,8 @@ import (
 
 	"idt/internal/config"
 	"idt/internal/dialer"
+	"idt/internal/inspect"
+	"idt/internal/singbox"
 )
 
 // LivePool manages the dynamic resolver pool, warm-up probing, oracle baselining, and picking.
@@ -52,6 +54,18 @@ func NewLivePool(logger Logger, datalistDir string) *LivePool {
 
 // Warmup runs the warm-up pipeline: loads candidates, probes via UDP port 53, baselines against oracle, builds live pool.
 func (p *LivePool) Warmup(ctx context.Context) error {
+	// Align with system diagnostics and low network safeguard
+	diag := inspect.RunDiagnostics(ctx)
+	if !diag.InternetOnline {
+		log.Printf("[VAULT WARN] %s", diag.ConnectivityStatus)
+	}
+
+	sg := singbox.NewSafeguard(singbox.SafeguardConfig{
+		MaxConcurrentDial: 4,
+		DialTimeout:       p.probeTimeout,
+		EnableThrottling:  true,
+	})
+
 	candidates, err := LoadCandidates(p.datalistDir)
 	if err != nil {
 		p.logger.LogSnapshot(0, 0, 0, map[string]int{"load_error": 1})
@@ -71,13 +85,13 @@ func (p *LivePool) Warmup(ctx context.Context) error {
 	hasOracle := oracleErr == nil
 
 	for _, cand := range candidates {
-		// Warm-up probe strictly pinned to plain UDP port 53
+		// Warm-up probe throttled via safeguard
+		_, dialErr := sg.DialContext(ctx, "udp", cand.Address)
+		start := time.Now()
 		stdDialer := dialer.Standard{
 			Address: cand.Address,
 			Timeout: p.probeTimeout,
 		}
-
-		start := time.Now()
 		ans, dialErr := stdDialer.Dial(ctx, p.target)
 		rtt := time.Since(start)
 
@@ -210,8 +224,11 @@ func (p *LivePool) Query(ctx context.Context, target string) (dialer.Answer, str
 			p.failCounts = make(map[string]int)
 		}
 		p.failCounts[d.Address]++
-		if p.failCounts[d.Address] >= 2 {
-			// Quarantine/remove dead resolver from liveDialers
+		shouldQuarantine := p.failCounts[d.Address] >= 2
+		p.mu.Unlock()
+
+		if shouldQuarantine {
+			p.mu.Lock()
 			var filtered []config.Dialer
 			for _, dialer := range p.liveDialers {
 				if dialer.Address != d.Address {
@@ -220,8 +237,8 @@ func (p *LivePool) Query(ctx context.Context, target string) (dialer.Answer, str
 			}
 			p.liveDialers = filtered
 			log.Printf("🛡️ QUARANTINE: Resolver %s (%s) removed due to consecutive runtime errors", d.Name, d.Address)
+			p.mu.Unlock()
 		}
-		p.mu.Unlock()
 	} else {
 		for _, ip := range ans.IPs {
 			ipStrs = append(ipStrs, ip.String())

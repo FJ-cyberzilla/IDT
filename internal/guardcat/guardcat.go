@@ -248,6 +248,25 @@ func (g *Guardcat) EnsureReadiness(ctx context.Context, probeTarget string) erro
 	return nil
 }
 
+// CheckInternetConnectivity performs a pre-test network connectivity awareness check
+// and returns whether the system is online, reporting status suitable for pretest banners.
+func (g *Guardcat) CheckInternetConnectivity(ctx context.Context) (bool, string) {
+	// Probe well-known root / public resolvers with strict timeout
+	targets := []string{"1.1.1.1:53", "8.8.8.8:53", "9.9.9.9:53"}
+	for _, target := range targets {
+		d := net.Dialer{Timeout: 2 * time.Second}
+		if conn, err := d.DialContext(ctx, "tcp", target); err == nil {
+			conn.Close()
+			return true, "[INTERNET ONLINE] System is connected to the internet. Low network safeguards active."
+		}
+		if conn, err := d.DialContext(ctx, "udp", target); err == nil {
+			conn.Close()
+			return true, "[INTERNET ONLINE] System is connected to the internet via UDP. Low network safeguards active."
+		}
+	}
+	return false, "[OFFLINE / NO NETWORK ADVANTAGE] System detected offline or restricted network environment. Local fallback mode engaged."
+}
+
 // RecommendAction evaluates endpoints and memory state, providing actionable guidance
 // on whether to restart, bypass failing servers, or proceed with test workflows.
 func (g *Guardcat) RecommendAction() string {

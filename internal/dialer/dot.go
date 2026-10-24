@@ -46,7 +46,7 @@ func (f *dpiFragConn) Write(p []byte) (int, error) {
 			if _, err := f.Conn.Write(rec1); err != nil {
 				return 0, err
 			}
-			time.Sleep(3 * time.Millisecond)
+			time.Sleep(2 * time.Millisecond)
 			if _, err := f.Conn.Write(rec2); err != nil {
 				return 0, err
 			}

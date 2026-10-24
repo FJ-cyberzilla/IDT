@@ -8,36 +8,38 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var (
+	guardcatLabelStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
+	preparingStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	readyStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
+	errorStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+	guardcatTileStyle  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("240")).Padding(0, 1)
+)
+
 // RenderGuardcatTile renders the permanent Guardcat status tile with live stats and animated pre-test status.
 func RenderGuardcatTile(statusPhase string, dotCount int, memoryMB uint64, goroutines int, width int) string {
 	w := getResponsiveWidth(width)
 
-	guardcatLabel := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).Render("Guardcat")
+	guardcatLabel := guardcatLabelStyle.Render("Guardcat")
 
 	var statusText string
 	switch statusPhase {
 	case "preparing":
 		dots := strings.Repeat(".", (dotCount%3)+1)
-		statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(fmt.Sprintf("Preparing for curiosity %s", dots))
+		statusText = preparingStyle.Render(fmt.Sprintf("Preparing for curiosity %s", dots))
 	case "ready":
-		statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).Render("ready and safe!")
+		statusText = readyStyle.Render("ready and safe!")
 	case "error":
-		statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Render("monitoring alert: system check warning!")
+		statusText = errorStyle.Render("monitoring alert: system check warning!")
 	default:
-		statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true).Render("ready and safe!")
+		statusText = readyStyle.Render("ready and safe!")
 	}
 
 	liveStats := Dim(fmt.Sprintf("│ Mem: %dMB │ Goroutines: %d", memoryMB, goroutines))
 
 	content := fmt.Sprintf("🛡️ %s : %s  %s", guardcatLabel, statusText, liveStats)
 
-	tileStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		Width(w - 2).
-		Padding(0, 1)
-
-	return tileStyle.Render(content)
+	return guardcatTileStyle.Width(w - 2).Render(content)
 }
 
 // getResponsiveWidth ensures layouts adapt cleanly to terminal zooming and viewports.

@@ -1,0 +1,116 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#00F0FF', 'edgeLabelBackground': '#1A202C', 'tertiaryColor': '#1A202C'}}}%%
+erDiagram
+    Options {
+        string Target
+        int Dials
+        duration Timeout
+        duration JitterMin
+        duration JitterMax
+        int MaxDials
+        bool EOFReconnectEnabled
+        int EOFTriggerThreshold
+        duration EOFTimeWindow
+    }
+
+    Dialer {
+        string Name
+        string Protocol
+        string Address
+    }
+
+    Answer {
+        duration RTT
+        IP[] IPs
+        error Error
+    }
+
+    Result {
+        Dialer Dialer
+        Summary Summary
+        duration[] Samples
+        string[][] IPs
+        int Total
+        int EOFErrorsCount
+        bool EOFReconnectTriggered
+    }
+
+    Summary {
+        int Count
+        duration Median
+        duration P90
+        duration Jitter
+        string Status
+    }
+
+    LivePool {
+        Dialer[] liveDialers
+        Dialer[] fallbacks
+        map failCounts
+        duration probeTimeout
+        string target
+        uint64 currentIndex
+    }
+
+    EndpointState {
+        string Name
+        string Address
+        string Protocol
+        int FailureCount
+        int EOFCount
+        string Status
+        time LastCheck
+        string LastError
+    }
+
+    MemoryReport {
+        uint64 HeapAlloc
+        uint64 HeapSys
+        int NumGoroutine
+        uint32 NumGC
+        string Status
+        string ActionTaken
+        time Timestamp
+    }
+
+    MatrixResult {
+        Region Source
+        Region Destination
+        duration Latency
+        float Loss
+        float Throughput
+        string SLAStatus
+    }
+
+    ProtocolTestResult {
+        ProtocolTestConfig Config
+        float SuccessRate
+        duration AvgLatency
+        int Score
+        string Status
+        string Details
+    }
+
+    DNSSECResult {
+        string Domain
+        string Status
+        bool HasDS
+        bool HasDNSKEY
+        bool HasRRSIG
+        duration Latency
+        string Message
+    }
+
+    WorkflowReport {
+        string OverallStatus
+        string SummaryVerdict
+        duration TotalDuration
+        WorkflowEvent[] Events
+    }
+
+    Options ||--o{ Result : configures
+    Dialer ||--o{ Result : tested_in
+    Result ||--|| Summary : aggregates
+    Answer ||--o{ Result : produces
+    LivePool ||--o{ Dialer : picks
+    Guardcat ||--o{ EndpointState : monitors
+    Guardcat ||--|| MemoryReport : generates

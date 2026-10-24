@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDT — Complete Technical Blueprint & Architecture Specification</title>
+  <link rel="stylesheet" href="docs/doc.css">
+  <style>
+    .blueprint-badge {
+      display: inline-block;
+      background: var(--bg-elevated);
+      border: 1px solid var(--success);
+      color: var(--success);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1rem;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .metric-card h4 {
+      color: var(--accent);
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-effects">
+    <div class="glow-orb cyan"></div>
+    <div class="glow-orb green"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <header class="doc-header">
+    <a href="index.html" class="logo-badge">IDT v2.6.0</a>
+    <a href="docs/DOCUMENTATION.html" class="back-link">← Documentation Portal</a>
+  </header>
+
+  <main class="doc-main">
+    <article class="md-content">
+      <div class="blueprint-badge">FJ™ CYBERTRONIC SYSTEMS — COMPLETE SYSTEM BLUEPRINT</div>
+      <h1>IDT (Intelligent DNS Tool) — Complete Technical Blueprint</h1>
+      
+      <p>This technical blueprint provides an exhaustive architectural overview of <strong>IDT (Intelligent DNS Tool)</strong>, detailing the multi-layered Go backend, Bubble Tea terminal user interface (TUI), Guardcat resilience watchdog, Vault instrumentation pipeline, and network diagnostic engines.</p>
+
+      <h2>1. Architectural Overview & Component Topology</h2>
+      <p>IDT is structured around strict separation of concerns, zero circular dependencies, and absolute concurrency safety. The system is partitioned into five primary tiers:</p>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <h4>CLI & TUI Layer</h4>
+          <p>Powered by Cobra (`internal/cmd`) and Bubble Tea (`internal/ui`) with Lip Gloss styling for real-time telemetry redraws.</p>
+        </div>
+        <div class="metric-card">
+          <h4>Network & Dialer Layer</h4>
+          <p>Unified dialer abstraction (`internal/dialer`) supporting DoH (RFC 8484), DoT (RFC 7858) with DPI fragmentation, and Standard UDP/TCP.</p>
+        </div>
+        <div class="metric-card">
+          <h4>Vault & Live Pool</h4>
+          <p>Dynamic resolver pool manager (`internal/vault`) handling seed candidate loading, warm-up probing, oracle baselining, and JSONL logging.</p>
+        </div>
+        <div class="metric-card">
+          <h4>Guardcat Watchdog</h4>
+          <p>Resilience and memory sentinel (`internal/guardcat`) enforcing endpoint health lifecycle, circuit breaking, and GC watermarking.</p>
+        </div>
+      </div>
+
+      <h2>2. Core Subsystem Specifications</h2>
+      
+      <h3>2.1 Network Resiliency & DPI Bypass (`internal/dialer/dot.go`)</h3>
+      <p>IDT implements advanced TLS ClientHello 1-byte fragmentation and `TCP_NODELAY` wrapping (`dpiFragConn`) to bypass Deep Packet Inspection (DPI) SNI filtering without increasing handshake latency (optimized to 2ms delay).</p>
+
+      <h3>2.2 Error Recovery & Android Private DNS (`internal/errorhandling`)</h3>
+      <p>Diagnoses Android Private DNS stubs and VPN disconnected states (`IsAndroidPrivateDNSFailure`), automatically recovering via secure encrypted TCP bootstrap lookup against trusted public recursive resolvers (`1.1.1.1:53`).</p>
+
+      <h3>2.3 Guardcat Health Watchdog (`internal/guardcat`)</h3>
+      <p>Monitors consecutive failures and EOF/reset drops, enforcing circuit breaking (`HEALTHY` ➔ `DEGRADED` ➔ `UNHEALTHY`) and automated garbage collection under memory pressure.</p>
+
+      <h2>3. Execution Sequence & Data Models</h2>
+      <p>Refer to accompanying architectural diagrams:</p>
+      <ul>
+        <li><code>sequences.mmd</code>: Full sequence flow from CLI bootstrap to TUI telemetry rendering.</li>
+        <li><code>DATAMODEL.mmd</code>: Entity-relationship data models covering Options, Dialers, Results, Summaries, and Guardcat states.</li>
+      </ul>
+
+      <h2>4. Compliance & Legal Notice</h2>
+      <blockquote>
+        <p><strong>Intellectual Property & Acceptable Use:</strong> Developed by FJ™ Cybertronic Systems. Authorized diagnostic and telemetry use only. Unauthorized copying, reverse engineering, or redistribution is strictly prohibited.</p>
+      </blockquote>
+    </article>
+  </main>
+</body>
+</html>

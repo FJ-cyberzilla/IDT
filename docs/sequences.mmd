@@ -1,0 +1,37 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#00F0FF', 'edgeLabelBackground': '#1A202C', 'tertiaryColor': '#1A202C'}}}%%
+sequenceDiagram
+    autonumber
+    actor User as Operator / SOC
+    participant CLI as Cobra CLI (main.go)
+    participant TUI as Bubble Tea TUI (internal/ui)
+    participant Guardcat as Guardcat Watchdog (internal/guardcat)
+    participant Vault as Live Vault Pool (internal/vault)
+    participant Runner as Concurrent Runner (internal/runner)
+    participant Dialer as Protocol Stack (DoH/DoT/Standard)
+
+    User->>CLI: idt (Launch Command Center)
+    CLI->>TUI: Initialize Bubble Tea Model & Theme
+    TUI->>Guardcat: EnsureReadiness & CheckInternetConnectivity
+    Guardcat-->>TUI: Preflight OK / Network Status Verified
+    TUI->>Vault: Warmup Candidates & Baseline Oracle
+    Vault->>Dialer: Probe Seed Resolvers (UDP/TCP Port 53 & DoH)
+    Dialer-->>Vault: Return Validated Live Resolvers & RTT
+    Vault-->>TUI: Live Resolver Pool Ready (Min 3 Nodes)
+    
+    User->>TUI: Select "Run Internet Dialer Test (IDT)"
+    TUI->>Runner: Run(ctx, dialers, options)
+    
+    loop Concurrent Dials (MaxConcurrent = 3)
+        Runner->>Dialer: Dial(ctx, target) with DPI Frag & TCP_NODELAY
+        Dialer-->>Runner: Return Answer (RTT, IPs, EOF/Err status)
+        alt EOF or Connection Reset Detected
+            Runner->>Guardcat: RecordFailure / Check EOF Thresholds
+            Guardcat-->>Runner: Trigger Auto-Reconnect if Window Breached
+        else Successful Dial
+            Runner->>Guardcat: RecordSuccess
+        end
+    end
+
+    Runner-->>TUI: Return Aggregated Results & Verdicts
+    TUI->>TUI: Sort by Median Latency & Compute Comparison
+    TUI-->>User: Render Elite RTT Distribution & Telemetry Dashboard
