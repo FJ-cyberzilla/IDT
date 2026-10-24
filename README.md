@@ -1,10 +1,5 @@
-IDT — Intelligent DNS Tool & Enterprise Simulation Suite
-
-https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go
-https://img.shields.io/badge/CLI-Cobra-4B8BBE?style=flat-square
-https://img.shields.io/badge/TUI-Bubble%20Tea-FF75B5?style=flat-square
-https://img.shields.io/badge/Coverage-Race%20Tested-success?style=flat-square
-https://img.shields.io/badge/License-MIT-yellow?style=flat-square
+# IDT
+## Intelligent DNS Tool & Enterprise Simulation Suite
 
 ---
 
