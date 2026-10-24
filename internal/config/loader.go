@@ -38,6 +38,9 @@ func Load() (Options, []Dialer, error) {
 	flag.Parse()
 
 	if data, err := os.ReadFile(*configPath); err == nil {
+		if hmacErr := VerifyConfigHMAC(*configPath, data, ""); hmacErr != nil {
+			return opts, dialers, hmacErr
+		}
 		var f fileFormat
 		if err := json.Unmarshal(data, &f); err == nil {
 			if f.Options.Target != "" {

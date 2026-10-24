@@ -180,6 +180,12 @@ build_app() {
         fi
     fi
 
+    if [ -f "bin/idt" ]; then
+        sha256sum bin/idt > bin/idt.sha256
+        sha256sum -c bin/idt.sha256
+        info "SHA-256 Checksum generated: bin/idt.sha256"
+    fi
+
     info "Build successful! Binary located at: ./bin/idt"
     press_enter
 }

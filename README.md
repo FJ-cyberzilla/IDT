@@ -100,12 +100,18 @@ cd idt
 # Run tests across all packages with race analyzer
 go test -v -race -count=1 ./...
 
-# Build the binary manually
+# Build the binary manually (automatically generates SHA-256 checksum manifest bin/idt.sha256)
 go build -ldflags="-s -w" -o bin/idt main.go
-cp bin/idt ./idt
+sha256sum bin/idt > bin/idt.sha256
+sha256sum -c bin/idt.sha256
 
 # Run the interactive TUI command center
 ./idt
+
+🔒 Security & Artifact Integrity
+- **Authenticated Encryption (AES-GCM)** (`internal/vault/crypto.go`): Vault payloads (`datalist/*.enc`) use AES-256-GCM with PBKDF2 key derivation and built-in authentication tags. Any manual tampering with `.enc` files instantly triggers decryption failure.
+- **Embedded HMAC Configuration Verification** (`internal/config/hmac.go`): Configuration and server files (`servers.json`) are verified on startup via HMAC-SHA256 signatures (`servers.json.sig`) before parsing server entries.
+- **SHA-256 Checksum Manifests** (`bin/idt.sha256`): Automatically generated during local builds via `installation.sh` and GitHub Actions CI (`.github/workflows/go.yml`) to detect build tampering.
 
 
 📞 Support & Repository

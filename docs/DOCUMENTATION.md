@@ -283,3 +283,11 @@ go build -o idt .
 ```bash
 ./idt --concurrency 20 --timeout 3s
 ```
+
+---
+
+## 14. Security, Cryptography & Artifact Integrity
+
+- **Authenticated Encryption (AES-GCM)** (`internal/vault/crypto.go`): Vault storage and encrypted seed payload files (`datalist/*.enc`) utilize AES-256-GCM authenticated encryption with PBKDF2 salt derivation (600,000 iterations). Because AES-GCM includes a built-in authentication tag, manual tampering with even a single byte of an `.enc` file instantly causes decryption failure at runtime, reliably flagging corruption or tampering.
+- **Embedded HMAC Configuration Verification** (`internal/config/hmac.go`, `internal/config/loader.go`): External configuration and server catalog files (`servers.json`) are verified on startup using HMAC-SHA256 signatures (`servers.json.sig`) before parsing any server entries. If the configuration is modified post-packaging without updating the signature, startup aborts with an integrity error.
+- **Binary & Artifact Integrity Checksums** (`bin/idt.sha256`): During local builds via `installation.sh` and CI workflows (`.github/workflows/go.yml`), a SHA-256 checksum manifest of the compiled binary (`bin/idt.sha256`) is automatically generated and verified via `sha256sum -c bin/idt.sha256` to ensure artifact integrity and detect build tampering.

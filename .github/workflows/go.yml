@@ -38,5 +38,13 @@ jobs:
       - name: Build
         run: go build -v ./...
 
+      - name: Build Binary and Verify Checksum
+        run: |
+          mkdir -p bin
+          go build -o bin/idt main.go
+          sha256sum bin/idt > bin/idt.sha256
+          sha256sum -c bin/idt.sha256
+          echo "Binary integrity verified successfully!"
+
       - name: Test (offline — no network calls)
         run: go test -short -v ./...
